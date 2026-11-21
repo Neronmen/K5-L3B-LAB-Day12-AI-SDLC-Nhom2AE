@@ -13,7 +13,9 @@ function frame(now) {
   G.time = now / 1000; G.dt = dt;  // giờ thật: banner/tổng kết không kẹt khi tab bị ẩn
   const [w, h] = fit();
   const s = G.snap;
+  UI.btns = [];
   stepParticles(dt);
+  updateTutorial();
   ctx.save();
   if (G.shake > 0) { ctx.translate(fxRand(-G.shake, G.shake), fxRand(-G.shake, G.shake)); G.shake = Math.max(0, G.shake - dt * 40); }
   if (!s) {
@@ -21,14 +23,17 @@ function frame(now) {
     text(G.offline ? "Không kết nối được máy chủ — đã chạy python -m chonoi.live chưa?" : "Đang chèo ra chợ…", w / 2, h / 2, { align: "center", size: 20 });
     ctx.restore(); return;
   }
-  if (G.scene === "title") { drawTitle(w, h, s); ctx.restore(); return; }
+  if (G.scene === "title") { drawTitle(w, h, s); ctx.restore(); drawTransition(w, h); return; }
   if (s.mode === "quan") drawQuanScene(w, h, s); else drawGatherScene(w, h, s);
   ctx.restore();
   if (s.mode === "quan") drawQuanHud(w, h, s); else drawGatherHud(w, h, s);
   if (G.flash > 0) { ctx.fillStyle = `rgba(${G.flashColor},${G.flash * 0.5})`; ctx.fillRect(0, 0, w, h); G.flash = Math.max(0, G.flash - dt * 2); }
+  if (Tut.active && G.banner) G.banner.t = G.time;   // banner chờ đọc xong hướng dẫn
   drawBanner(w, h);
   if (G.scene === "summary") drawSummary(w, h, s);
-  else if (G.paused || s.paused) drawPause(w, h);
+  else if (G.paused) drawPause(w, h);
+  else drawTutorial(w, h);
+  drawTransition(w, h);
   if (G.offline) text("Mất kết nối tới máy chủ", w / 2, h - 40, { align: "center", color: "#ff8a80", size: 16, stroke: "#000" });
   if (s.error) text("Luật báo lỗi — xem terminal. R để chơi lại.", w / 2, 120, { align: "center", color: "#ff8a80", size: 16, stroke: "#000" });
 }
@@ -39,8 +44,11 @@ function drawTitle(w, h, s) {
   G.disp = [30 + Math.sin(G.time * 0.08) * 25, 0];
   drawGatherScene(w, h, fake, { title: true });
   ctx.fillStyle = "rgba(10,20,30,.35)"; ctx.fillRect(0, 0, w, h);
-  const sc = Math.min(1.4, Math.max(0.7, w / 1100));
-  const cy = h * 0.3;
+  drawBirds(w, h, G.time, 6, 0.05);
+  const sc = Math.min(1.4, Math.max(0.5, w / 1100));
+  const intro = titleIntro();
+  const cy = h * 0.3 - intro.drop * h * 0.6 + Math.sin(G.time * 1.3) * 6 * sc;   // rơi vào cảnh rồi bập bềnh trên sóng
+  ctx.globalAlpha = intro.alpha;
   // biển hiệu gỗ
   const bw = 640 * sc, bh = 170 * sc;
   ctx.save(); ctx.translate(w / 2, cy); ctx.rotate(Math.sin(G.time * 0.8) * 0.015);
@@ -54,17 +62,19 @@ function drawTitle(w, h, s) {
   ctx.restore();
   drawSenSide(w / 2 - bw / 2 - 30 * sc, cy + 40 * sc, 60 * sc, { face: 1, t: G.time, under: false });
   drawDish("lau_ca_linh_dien_dien", w / 2 + bw / 2 + 30 * sc, cy + 40 * sc, 34 * sc, G.time);
-  // menu
-  const items = [["ENTER", "Bắt đầu một ngày mới"], ["Q", "Vào thẳng quán (thử, kho mẫu)"], ["M", Audio2.muted ? "Bật âm thanh" : "Tắt âm thanh"]];
-  const my = h * 0.58;
-  items.forEach(([k, label], i) => {
-    const y = my + i * 54 * sc, pulse = i === 0 ? 1 + Math.sin(G.time * 4) * 0.03 : 1;
-    const iw = 420 * sc * pulse, ih = 44 * sc;
-    panel(w / 2 - iw / 2, y - ih / 2, iw, ih, { r: ih / 2, fill: i === 0 ? "rgba(194,69,58,.92)" : "rgba(43,28,18,.8)" });
-    keycap(w / 2 - iw / 2 + 16 * sc, y, k, sc);
-    text(label, w / 2 + 30 * sc, y + 6 * sc, { size: 18 * sc, align: "center", weight: 800 });
+  ctx.globalAlpha = 1;
+  // menu: mũi tên/WS chọn, Enter bấm; chuột rê = chọn, click = bấm
+  const my = h * 0.58, ma = clamp((G.time - UI.titleAt - 0.6) / 0.4, 0, 1);
+  ctx.globalAlpha = ma;
+  TITLE_ITEMS.forEach((it, i) => {
+    const y = my + i * 54 * sc + (1 - ma) * 20, sel = UI.sel === i, pulse = sel ? 1 + Math.sin(G.time * 4) * 0.02 : 1;
+    const iw = Math.min(w - 32, 420 * sc) * pulse, ih = 44 * sc;
+    const label = typeof it.label === "function" ? it.label() : it.label;
+    if (uiButton("title" + i, w / 2 - iw / 2, y - ih / 2, iw, ih, label, { key: it.key, sc, size: 18 * sc, selected: sel, act: it.act })) UI.sel = i;
+    if (sel) text("▶", w / 2 - iw / 2 - 14 * sc, y + 6 * sc, { size: 18 * sc, align: "center", color: "#ffe39a", stroke: "rgba(0,0,0,.5)" });
   });
-  text("WASD bơi/đi · E hái, cập bến, nấu, bưng · SPACE bắt cá · P tạm dừng", w / 2, h - 50 * sc, { size: 15 * sc, align: "center", color: "#fff", stroke: "rgba(0,0,0,.5)" });
+  ctx.globalAlpha = 1;
+  text("↑↓ chọn · WASD bơi/đi · E hái, cập bến, nấu, bưng · SPACE bắt cá · P tạm dừng · H hướng dẫn", w / 2, h - 50 * sc, { size: 15 * sc, align: "center", color: "#fff", stroke: "rgba(0,0,0,.5)" });
   text("Sáng lặn bắt cá lóc, cá linh, hái bông súng, bông điên điển — tối nấu cho khách trên ghe.", w / 2, h - 26 * sc, { size: 13 * sc, align: "center", color: "rgba(255,255,255,.8)", stroke: "rgba(0,0,0,.5)" });
 }
 function keycap(x, y, k, sc) {
@@ -79,6 +89,7 @@ function drawBanner(w, h) {
   const b = G.banner;
   if (!b) return;
   const t = G.time - b.t;
+  if (t < 0) return;   // còn đang chuyển cảnh
   if (t > 3) { G.banner = null; return; }
   const a = t < 0.4 ? t / 0.4 : t > 2.4 ? 1 - (t - 2.4) / 0.6 : 1;
   ctx.globalAlpha = a;
@@ -122,7 +133,7 @@ function drawSummary(w, h, s) {
       : (s.hold || []).length ? "Chưa đủ nguyên liệu cho món nào — khách sẽ về tay không!" : "Giỏ trống — tối nay khó mở quán lắm!";
     text(msg, w / 2, y + 262 * sc,
       { size: 15 * sc, align: "center", weight: 700, color: can.length ? "#2f6b2d" : "#b3261e" });
-    keyRow(w / 2, y + ph - 50 * sc, [["ENTER", "Mở quán tối nay →"], ["R", "Lặn lại"]], sc);
+    keyRow(w / 2, y + ph - 50 * sc, [["ENTER", "Mở quán tối nay →", advanceFromSummary], ["R", "Lặn lại", restartFromSummary]], sc);
   } else {
     text(`Ngày ${day} · Đóng quán`, w / 2, y + 52 * sc, { size: 32 * sc, align: "center", weight: 800, color: "#7a3a12" });
     const rows = [["Tiền ca tối", (s.shift_earned ?? s.earned ?? 0) + "k"], ["Khách đã phục vụ", s.served_count ?? 0],
@@ -133,17 +144,15 @@ function drawSummary(w, h, s) {
       text(k, x + 70 * sc, ry, { size: 18 * sc, color: "#6a4020", weight: 700 });
       text(String(val), x + pw - 70 * sc, ry, { size: 20 * sc, align: "right", weight: 800, color: i === 4 ? "#c2453a" : "#4a2410" });
     });
-    keyRow(w / 2, y + ph - 50 * sc, [["ENTER", "Sang ngày mới →"], ["R", "Mở quán lại"]], sc);
+    keyRow(w / 2, y + ph - 50 * sc, [["ENTER", "Sang ngày mới →", advanceFromSummary], ["R", "Mở quán lại", restartFromSummary]], sc);
   }
   ctx.globalAlpha = 1;
 }
 function keyRow(cx, y, items, sc) {
-  const iw = 230 * sc;
-  items.forEach(([k, label], i) => {
-    const x = cx + (i - (items.length - 1) / 2) * (iw + 16 * sc) - iw / 2, ih = 46 * sc;
-    panel(x, y - ih / 2, iw, ih, { r: ih / 2, fill: i === 0 ? "rgba(194,69,58,.95)" : "rgba(43,28,18,.85)" });
-    keycap(x + 10 * sc, y, k, sc);
-    text(label, x + iw / 2 + 28 * sc, y + 6 * sc, { size: 15 * sc, align: "center", weight: 800 });
+  const iw = 230 * sc, ih = 46 * sc;
+  items.forEach(([k, label, act], i) => {
+    const x = cx + (i - (items.length - 1) / 2) * (iw + 16 * sc) - iw / 2;
+    uiButton("row" + i, x, y - ih / 2, iw, ih, label, { key: k, sc, size: 15 * sc, selected: i === 0, act });
   });
 }
 

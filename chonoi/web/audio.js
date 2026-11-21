@@ -61,8 +61,20 @@ const Audio2 = (() => {
     angry: () => tone(300, 0.4, { type: "sawtooth", vol: 0.14, to: 180 }),
     fanfare: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.35, { type: "triangle", vol: 0.2, delay: i * 0.12 })),
     faint: () => [440, 392, 330, 262].forEach((f, i) => tone(f, 0.4, { type: "triangle", vol: 0.2, delay: i * 0.18 })),
+    // gà gáy "ò ó o o": 4 nốt trượt tần số, sóng răng cưa nhỏ
+    rooster: () => {
+      tone(520, 0.14, { type: "sawtooth", to: 760, vol: 0.09 });
+      tone(760, 0.16, { type: "sawtooth", to: 980, vol: 0.1, delay: 0.17 });
+      tone(980, 0.5, { type: "sawtooth", to: 1180, vol: 0.11, delay: 0.36 });
+      tone(1100, 0.45, { type: "sawtooth", to: 700, vol: 0.09, delay: 0.88 });
+    },
+    // hoàng hôn: tiếng gió vút + hợp âm trầm
+    dusk: () => { noise(1.1, { freq: 700, vol: 0.12 }); [294, 349, 440].forEach((f, i) => tone(f, 1.2, { type: "sine", vol: 0.1, delay: 0.1 + i * 0.08, attack: 0.3 })); },
   };
-  function sfx(name) { if (ac && SFX[name]) SFX[name](); }
+  function sfx(name, delay) {
+    if (!ac || !SFX[name]) return;
+    if (delay) setTimeout(() => SFX[name](), delay * 1000); else SFX[name]();
+  }
 
   // nhạc nền: ngũ cung kiểu đờn ca tài tử (Hò - Xự - Xang - Xê - Cống), chơi nhẹ, lặp
   const SCALE = { day: [392, 440, 523, 587, 659, 784, 880], night: [294, 349, 392, 440, 523, 587, 698] };

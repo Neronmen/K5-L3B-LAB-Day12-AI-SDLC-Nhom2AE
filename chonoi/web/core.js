@@ -56,8 +56,9 @@ function onNewSession(s) {
   const day = (s.story && s.story.day) || 1;
   if (G.scene !== "title") {
     G.banner = { text: s.mode === "gather" ? `Ngày ${day} · Buổi sáng` : `Ngày ${day} · Quán mở cửa`,
-      sub: s.mode === "gather" ? "Lặn bắt cá, hái bông trên sông" : "Khách sắp tới — nhóm bếp đi!", t: G.time };
+      sub: s.mode === "gather" ? "Lặn bắt cá, hái bông trên sông" : "Khách sắp tới — nhóm bếp đi!", t: G.time + transRemaining() };
     Audio2.music(s.mode === "gather" ? "day" : "night");
+    queueTutorial(s.mode);
   }
 }
 
@@ -67,6 +68,7 @@ const MOVE_KEYS = { w: "u", arrowup: "u", s: "d", arrowdown: "d", a: "l", arrowl
 let lastSent = "", queue = [], inflight = false;
 
 function currentInput() {
+  if (transActive() || Tut.active) return { move: [0, 0], interact: false, catch: false };
   const mode = G.snap ? G.snap.mode : "gather";
   const dx = (down.has("r") ? 1 : 0) - (down.has("l") ? 1 : 0);
   let dy = (down.has("d") ? 1 : 0) - (down.has("u") ? 1 : 0);
@@ -95,20 +97,17 @@ addEventListener("keydown", (e) => {
   if ([" ", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) e.preventDefault();
   if (e.repeat) return;
   if (k === "m") { Audio2.toggle(); return; }
-  if (G.scene === "title") {
-    if (k === "enter" || k === " ") startGame("gather");
-    else if (k === "q") startGame("quan");
-    return;
-  }
+  if (UI.key(k)) { pushInput(); return; }   // chuyển cảnh, hướng dẫn, menu (ui.js)
+  if (G.scene === "title") return;
   if (G.scene === "summary") {
-    if ((k === "enter" || k === " " || k === "n") && G.time - G.summaryAt > 0.6) { G.scene = "play"; G.waitFresh = true; post("/next"); Audio2.sfx("click"); }
-    else if (k === "r") { G.scene = "play"; G.waitFresh = true; post("/restart"); }
-    else if (k === "escape") { G.scene = "title"; setPaused(true); }
+    if (k === "enter" || k === " " || k === "n") advanceFromSummary();
+    else if (k === "r") restartFromSummary();
+    else if (k === "escape") { G.scene = "title"; UI.titleAt = null; setPaused(true); }
     return;
   }
   if (k === "escape" || k === "p") { setPaused(!G.paused); Audio2.sfx("click"); return; }
   if (G.paused) {
-    if (k === "t") G.scene = "title";
+    if (k === "t") { G.scene = "title"; UI.titleAt = null; }
     else if (k === "r") { G.waitFresh = true; post("/restart"); setPaused(false); }
     return;
   }
