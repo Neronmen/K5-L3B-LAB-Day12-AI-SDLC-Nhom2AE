@@ -16,6 +16,8 @@ function gatherView(w, h, s) {
   const wantTop = clamp(td - V * 0.45, -SKY, D + 1.2 - V);
   Gather.cam = Gather.view ? lerp(Gather.cam, want, 0.12) : want;
   Gather.top = Gather.view && Gather.top !== undefined ? lerp(Gather.top, wantTop, 0.1) : wantTop;
+  if (!Number.isFinite(Gather.cam)) Gather.cam = Number.isFinite(want) ? want : 50;   // tự hồi nếu từng nhận NaN
+  if (!Number.isFinite(Gather.top)) Gather.top = Number.isFinite(wantTop) ? wantTop : 0;
   const surf = -Gather.top * u;
   const v = { u, surf, D, b, meta, w, h, sx: (x) => (x - Gather.cam) * u + w / 2, sy: (d) => surf + d * u };
   Gather.view = v;
@@ -42,6 +44,7 @@ function drawGatherScene(w, h, s, opts = {}) {
     const cx = ((i * 37 + t * (1.2 + i * 0.3)) % (w / u + 30)) * u - 10 * u, cy = surf * (0.12 + (i % 3) * 0.13);
     cloud(cx - (Gather.cam * u * 0.05) % (w + 400), cy, u * (1 + (i % 2) * 0.6));
   }
+  drawGatherAmbient(v, s, "sky", opts);   // trời xám khi mưa, chim bay (weather.js)
   // bờ xa: hàng dừa (parallax 0.3)
   ctx.fillStyle = mixColor("#5d8c6a", "#4f8f58", dayFrac);
   ctx.beginPath(); ctx.moveTo(0, surf);
@@ -107,6 +110,7 @@ function drawGatherScene(w, h, s, opts = {}) {
     const wx = (hash("m" + i) * 110 + t * 0.15 * (0.5 + hash("n" + i))) % 110 - 5, wd = 1 + hash("d" + i) * (D - 1) + Math.sin(t + i) * 0.3;
     ctx.fillRect(sx(wx), sy(wd), 2, 2);
   }
+  drawGatherAmbient(v, s, "deep", opts);   // cá nhỏ trang trí ở xa
   // đáy sông: bùn + rong + đá
   ctx.fillStyle = "#3a2f22";
   ctx.beginPath(); ctx.moveTo(sx(b.x[0] - 10), sy(D + 1.2));
@@ -163,6 +167,7 @@ function drawGatherScene(w, h, s, opts = {}) {
   ctx.stroke();
 
   drawParticles(sx, sy, u);
+  drawGatherAmbient(v, s, "front", opts);   // chuồn chuồn, sương sớm, mưa phùn
 
   // tối dần theo độ sâu: vùng sáng quanh người (đèn đội đầu)
   if (p && !opts.title && G.disp && G.disp[1] > 6) {

@@ -3,6 +3,7 @@
 
 function handleEvent(e, s) {
   if (G.scene === "title") return;
+  achEvent(e, s);   // thành tích (ui.js)
   if (s.mode === "quan") quanEvent(e, s); else gatherEvent(e, s);
 }
 
@@ -12,6 +13,7 @@ function frame(now) {
   const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
   G.time = now / 1000; G.dt = dt;  // giờ thật: banner/tổng kết không kẹt khi tab bị ẩn
   const [w, h] = fit();
+  if (w < 2 || h < 2) return;   // tab ẩn / cửa sổ 0 px: bỏ khung này (tránh camera NaN)
   const s = G.snap;
   UI.btns = [];
   stepParticles(dt);
@@ -106,7 +108,7 @@ function drawBanner(w, h) {
 function drawSummary(w, h, s) {
   const t = Math.min(1, (G.time - G.summaryAt) / 0.5), ease = 1 - Math.pow(1 - t, 3);
   ctx.fillStyle = `rgba(5,10,20,${0.6 * ease})`; ctx.fillRect(0, 0, w, h);
-  const sc = Math.min(1.2, Math.max(0.75, w / 1200)), pw = 560 * sc, ph = 380 * sc;
+  const sc = Math.min(1.2, Math.max(0.55, w / 1200)), pw = Math.min(w - 20, 560 * sc), ph = 450 * sc;
   const x = w / 2 - pw / 2, y = h / 2 - ph / 2 + (1 - ease) * 60;
   ctx.globalAlpha = ease;
   panel(x, y, pw, ph, { fill: "rgba(250,238,210,.97)", border: "rgba(120,70,30,.7)", r: 20 });
@@ -143,6 +145,7 @@ function drawSummary(w, h, s) {
     });
     keyRow(w / 2, y + ph - 50 * sc, [["ENTER", "Sang ngày mới →", advanceFromSummary], ["R", "Mở quán lại", restartFromSummary]], sc);
   }
+  drawAchievementRow(w / 2, y + ph - 134 * sc, pw - 40 * sc, sc, s.mode);
   ctx.globalAlpha = 1;
 }
 function keyRow(cx, y, items, sc) {

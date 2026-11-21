@@ -59,6 +59,7 @@ function onNewSession(s) {
       sub: s.mode === "gather" ? "Lặn bắt cá, hái bông trên sông" : "Khách sắp tới — nhóm bếp đi!", t: G.time + transRemaining() };
     Audio2.music(s.mode === "gather" ? "day" : "night");
     queueTutorial(s.mode);
+    wxNewSession(); achReset(s);
   }
 }
 

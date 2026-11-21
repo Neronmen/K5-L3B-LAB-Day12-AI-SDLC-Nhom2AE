@@ -37,6 +37,12 @@ Mở địa chỉ in ra → **Enter** bắt đầu một ngày. Sáng: **WASD** 
 - Út Sen mặc áo bà ba, đội nón lá, có hoạt ảnh bơi; đàn cá linh bơi thành bầy, cá lóc có vằn.
 - Quán trên ghe ban đêm: đèn lồng đung đưa, lò than có lửa và khói, khách mỗi người một kiểu, bong bóng gọi món, vòng kiên nhẫn đổi màu.
 - Âm thanh tổng hợp + nhạc nền ngũ cung kiểu đờn ca tài tử.
+- Chuyển cảnh điện ảnh: hoàng hôn trên sông (sáng -> tối), màn đen "Ngày N" + gà gáy + bình minh (tối -> ngày mới).
+- Hướng dẫn lần đầu mỗi buổi: 3 thẻ có mũi tên chỉ vào HUD, H xem lại; màn chính có logo bập bềnh, chim bay, menu chọn bằng phím/chuột.
+- Menu tạm dừng + Cài đặt (âm lượng Nhạc/Hiệu ứng riêng, rung màn, vòng tương tác); chơi được bằng chuột và cảm ứng (joystick ảo, nút E/Bắt), co giãn tới màn 375 px.
+- Thời tiết buổi sáng: sương sớm đầu buổi, mưa phùn thỉnh thoảng (hạt xiên, vòng gợn, tiếng mưa), chuồn chuồn, cá nhỏ trang trí ở xa (không bắt được).
+- Buổi tối: đom đóm lập lòe, ánh đèn lồng phản chiếu trên nước, ghe láng giềng chèo ngang.
+- Thành tích (toast + màn tổng kết, kỷ lục lưu trong trình duyệt): Thợ lặn, Không ngạt lần nào, Quán đắt khách, Khách quen, Bếp trưởng.
 
 ## Tự do sáng tạo
 

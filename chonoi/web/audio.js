@@ -105,5 +105,23 @@ const Audio2 = (() => {
     if (timer) { clearInterval(timer); timer = null; }
     startMusic();
   }
-  return { unlock, toggle, sfx, music, setVolumes, get muted() { return muted; } };
+  // âm thanh nền lặp mượt: noise lọc trong bộ đệm 2 s lặp, âm lượng đổi từ từ
+  const LOOP_DEF = { rain: { filter: "highpass", freq: 1600, q: 0.4, max: 0.16 } };
+  const loops = {};
+  function loop(name, level) {
+    const d = LOOP_DEF[name];
+    if (!ac || !d) return;
+    let L = loops[name];
+    if (!L) {
+      if (level <= 0.001) return;
+      const buf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), ch = buf.getChannelData(0);
+      for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+      const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+      src.buffer = buf; src.loop = true; f.type = d.filter; f.frequency.value = d.freq; f.Q.value = d.q; g.gain.value = 0;
+      src.connect(f); f.connect(g); g.connect(d.bus === "music" ? musicGain : sfxBus); src.start();
+      L = loops[name] = { g, level: 0 };
+    }
+    if (Math.abs(L.level - level) > 0.01 || (level === 0 && L.level !== 0)) { L.level = level; L.g.gain.setTargetAtTime(level * d.max, ac.currentTime, 0.4); }
+  }
+  return { unlock, toggle, sfx, music, setVolumes, loop, LOOP_DEF, get muted() { return muted; } };
 })();

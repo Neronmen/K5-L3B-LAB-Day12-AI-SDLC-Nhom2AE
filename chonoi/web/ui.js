@@ -358,12 +358,13 @@ const Toasts = [];
 function toast(title, sub, icon) { Toasts.push({ title, sub, icon: icon || "★", t0: G.time }); Audio2.sfx("fanfare"); }
 function drawToasts(w, h) {
   const sc = Math.min(1.1, Math.max(0.6, w / 1200));
-  let y = 70 * sc;
+  let y = 96 * sc;
   for (let i = 0; i < Toasts.length; i++) {
     const tt = G.time - Toasts[i].t0;
     if (tt > 4) { Toasts.splice(i--, 1); continue; }
-    const a = tt < 0.35 ? tt / 0.35 : tt > 3.5 ? 1 - (tt - 3.5) / 0.5 : 1, slide = (1 - Math.min(1, tt / 0.35)) * 60;
-    const tw = Math.min(w - 24, 300 * sc), th = 58 * sc, x = w - tw - 14 + slide;
+    const a = tt < 0.35 ? tt / 0.35 : tt > 3.5 ? 1 - (tt - 3.5) / 0.5 : 1, slide = (1 - Math.min(1, tt / 0.35)) * 30;
+    const tw = Math.min(w - 24, 300 * sc), th = 58 * sc, x = (w - tw) / 2;   // giữa trên: không che HUD hai bên
+    y -= slide;
     ctx.globalAlpha = a;
     panel(x, y, tw, th, { fill: "rgba(250,238,210,.97)", border: "rgba(212,150,40,.9)" });
     ctx.fillStyle = "#ffcf3d"; ctx.beginPath(); ctx.arc(x + 30 * sc, y + th / 2, 18 * sc, 0, 7); ctx.fill();
@@ -371,7 +372,7 @@ function drawToasts(w, h) {
     text(Toasts[i].title, x + 58 * sc, y + 24 * sc, { size: 15 * sc, weight: 800, color: "#7a3a12" });
     text(Toasts[i].sub, x + 58 * sc, y + 44 * sc, { size: 12 * sc, color: "#6a4020" });
     ctx.globalAlpha = 1;
-    y += th + 8;
+    y += slide + th + 8;
   }
 }
 
@@ -476,3 +477,59 @@ cv.addEventListener("mousedown", (e) => {
 });
 addEventListener("mouseup", () => { UI.dragging = null; });
 cv.addEventListener("click", (e) => { if (!UI.dragging) pressButton(hitButton(e.clientX, e.clientY)); });
+
+// ---------------- thành tích (tính từ sự kiện client nhận; kỷ lục lưu localStorage) ----------------
+const ACH = {
+  tho_lan: { name: "Thợ lặn", desc: "Lặn đầy giỏ", icon: "◎", mode: "gather" },
+  khong_ngat: { name: "Không ngạt lần nào", desc: "Về bến có hàng, không bị ngạt", icon: "♥", mode: "gather" },
+  dat_khach: { name: "Quán đắt khách", desc: "Phục vụ ≥ 3 khách", icon: "★", mode: "quan" },
+  khach_quen: { name: "Khách quen", desc: "Được boa ≥ 2 lần", icon: "☺", mode: "quan" },
+  bep_truong: { name: "Bếp trưởng", desc: "Nấu đủ 3 món khác nhau", icon: "♨", mode: "quan" },
+};
+const Ach = { got: new Set(), chokes: 0, served: 0, tips: 0, dishes: new Set() };
+const AchRec = loadJSON("chonoi_ach", { count: {}, bestServed: 0, bestShift: 0 });
+function achReset() { Ach.got = new Set(); Ach.chokes = 0; Ach.served = 0; Ach.tips = 0; Ach.dishes = new Set(); }
+function achUnlock(id) {
+  if (Ach.got.has(id)) return;
+  Ach.got.add(id);
+  AchRec.count[id] = (AchRec.count[id] || 0) + 1;
+  saveJSON("chonoi_ach", AchRec);
+  toast("Thành tích: " + ACH[id].name, ACH[id].desc, ACH[id].icon);
+}
+function achEvent(e, s) {
+  const d = e.data || {};
+  switch (e.name) {
+    case "hold_full": achUnlock("tho_lan"); break;
+    case "gather": case "fish_caught": if (s.hold_capacity && s.hold_count >= s.hold_capacity) achUnlock("tho_lan"); break;
+    case "choke": Ach.chokes++; break;
+    case "gather_end": {
+      const items = (d.inventory && d.inventory.items) || {};
+      if (d.reason !== "fainted" && Ach.chokes === 0 && Object.values(items).some((n) => n > 0)) achUnlock("khong_ngat");
+      break;
+    }
+    case "served": Ach.served++; if (d.tip > 0) Ach.tips++;
+      if (Ach.served >= 3) achUnlock("dat_khach");
+      if (Ach.tips >= 2) achUnlock("khach_quen");
+      if (Ach.served > AchRec.bestServed) { AchRec.bestServed = Ach.served; saveJSON("chonoi_ach", AchRec); }
+      break;
+    case "cook_started": if (d.dish_id) Ach.dishes.add(d.dish_id); if (Ach.dishes.size >= 3) achUnlock("bep_truong"); break;
+    case "quan_end": if ((d.shift_earned || 0) > AchRec.bestShift) { AchRec.bestShift = d.shift_earned; saveJSON("chonoi_ach", AchRec); } break;
+  }
+}
+// hàng huy hiệu ở màn tổng kết: sáng = đã đạt buổi này, mờ = chưa
+function drawAchievementRow(cx, y, width, sc, mode) {
+  const ids = Object.keys(ACH).filter((id) => ACH[id].mode === mode);
+  const bw = Math.min(150 * sc, width / ids.length - 8);
+  text("THÀNH TÍCH BUỔI NÀY", cx, y - 8 * sc, { size: 11 * sc, align: "center", weight: 800, color: "#a0521a" });
+  ids.forEach((id, i) => {
+    const x = cx + (i - (ids.length - 1) / 2) * (bw + 8) - bw / 2, on = Ach.got.has(id);
+    rrect(x, y, bw, 34 * sc, 10); ctx.fillStyle = on ? "rgba(255,207,61,.35)" : "rgba(122,58,18,.08)"; ctx.fill();
+    ctx.strokeStyle = on ? "rgba(212,150,40,.9)" : "rgba(122,58,18,.2)"; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.globalAlpha = on ? 1 : 0.4;
+    text(ACH[id].icon, x + 14 * sc, y + 18 * sc, { size: 16 * sc, align: "center", base: "middle", weight: 800, color: "#7a3a12" });
+    text(ACH[id].name, x + 26 * sc, y + 14 * sc, { size: 11 * sc, base: "middle", weight: 800, color: "#4a2410" });
+    text("đã đạt " + (AchRec.count[id] || 0) + " lần", x + 26 * sc, y + 26 * sc, { size: 9 * sc, base: "middle", color: "#7a5030" });
+    ctx.globalAlpha = 1;
+  });
+  if (mode === "quan") text(`Kỷ lục: phục vụ ${AchRec.bestServed} khách · ca tối ${AchRec.bestShift}k`, cx, y + 47 * sc, { size: 11 * sc, align: "center", color: "#7a5030" });
+}

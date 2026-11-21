@@ -51,7 +51,10 @@ function drawQuanScene(w, h, s) {
     const gx = [0.08, 0.86, 0.12, 0.8][i] * (w - v.side), gy = [0.13, 0.17, 0.92, 0.95][i] * h + Math.sin(t * 0.6 + i) * 3;
     ctx.globalAlpha = 0.5; drawBoatSide(gx, gy, u * 0.45, { beo: i % 2 === 0, seed: i, color: "#2b2420", roofColor: "#1d1712", trim: "#4a2a1a" }); ctx.globalAlpha = 1;
     lantern(gx - u * 0.2, gy - u * 1.0, u * 0.28, t + i, 0.9);
+    reflect(gx - u * 0.2, gy + u * 0.5, u * 0.5, t + i, 5);
   }
+  drawQuanAmbient(v, s, "water", w, h);   // ghe láng giềng chèo ngang (weather.js)
+  drawQuanAmbient(v, s, "reflect", w, h);
 
   // ---- ghe quán ----
   const x0 = sx(b.x[0]), y0 = sy(b.z[1]), W = X * u, H = Z * zu, hull = 1.5 * u;
@@ -165,6 +168,7 @@ function drawQuanScene(w, h, s) {
     ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(gx, gy, rad, 0, 7); ctx.fill();
   }
   ctx.restore();
+  drawQuanAmbient(v, s, "front", w, h);   // đom đóm
   drawParticles(sx, sy, u);
   for (const f of Quan.ui) f();
   if (p) hintQuan(v, s, p);
