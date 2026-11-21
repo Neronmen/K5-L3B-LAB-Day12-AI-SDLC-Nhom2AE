@@ -7,9 +7,10 @@ Cách dùng: mở repo trong Claude Code / Cursor / Copilot, dán prompt, đọc
 
 ---
 
-## B1. Điền TEAM.md (cả hai cùng làm, 5 phút) — BẮT BUỘC
-Không cần AI. Sửa bảng 2 dòng (tên, GitHub handle, module: A = `sim/*` + `qa`, B = `client/ui` + docs), vai: A = Integrator + QA, B = PO + Scrum/Release; điền 6 dòng thỏa thuận. Sửa `"team_size": 2` và `"team": "<ten-nhom>"` trong `game.contract.json`.
-(`tools/check_team.py` đòi 4–6 người → CI cảnh báo vàng; đã ghi ở `docs/clarify.md` #1, nhớ hỏi giảng viên.)
+## B1. TEAM.md — đã điền, Ninh chỉ còn thay handle
+Đã điền tên + MSSV cả hai, vai, thỏa thuận; `team_size` = 2, `team` = `Nhom2AE`.
+**Ninh:** thay `…` ở cột GitHub handle bằng handle của mình rồi commit bằng tài khoản của mình (đây là commit đầu tiên của Ninh).
+(`tools/check_team.py` vẫn cảnh báo số người 4–6 → CI vàng; đã ghi ở `docs/clarify.md` #1, nhớ hỏi giảng viên.)
 
 ## B2. Skill thứ 2 của nhóm: `log-ai-usage`
 ```
