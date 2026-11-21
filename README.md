@@ -30,6 +30,19 @@ python -m chonoi.live --mode gather      # Windows: python; Linux/macOS: python3
 ```
 Mở địa chỉ in ra → **Enter** bắt đầu một ngày. Sáng: **WASD** bơi, **E** hái bông / cập bến, **Space** bắt cá (dưới nước), canh thanh oxy. Cập bến → **Enter** mở quán tối: **E** ở bếp để nấu món khách gọi, **E** lấy món khi chín, **E** ở bàn để mời khách. **P** tạm dừng, **M** tắt tiếng, **R** chơi lại buổi.
 
+**Cách tính điểm** (PRD-0): `điểm = earned + 100 × floor(uy tín)`. `earned` là tổng thu cả lượt (giá món + boa).
+Boa = `floor(giá × 0.2)` nếu khách còn ≥ 50% kiên nhẫn lúc được phục vụ, và mỗi lần thu boa uy tín +0.2.
+Khách hết kiên nhẫn bỏ về thì uy tín −0.5. Uy tín bắt đầu từ 3.0, kẹp trong [0, 5].
+
+**Từ clone sạch (macOS/Linux), 3 lệnh:**
+```bash
+git clone https://github.com/Neronmen/K5-L3B-LAB-Day12-AI-SDLC-Nhom2AE && cd K5-L3B-LAB-Day12-AI-SDLC-Nhom2AE
+PYTHONPATH=tests:. python3 -m unittest discover -s tests -v   # toàn bộ test (1 lệnh); Windows: python tools/run_tests.py phase-1
+python3 -m chonoi.live --mode gather                           # chơi trên trình duyệt
+```
+Headless theo Test Contract: `python3 -m chonoi.headless --mode gather|quan --seed 1 --ticks 600 --out out.jsonl`
+(sáng và tối nối nhau qua `--inventory-out kho.json` rồi `--inventory kho.json`).
+
 ## Sáng tạo của nhóm
 (Chỉ ở client trình duyệt; headless không đổi.)
 - Một ngày trọn vẹn: sáng lặn → tối mở quán bằng đúng nguyên liệu vừa lặn → ngày mới, cộng dồn tổng thu.

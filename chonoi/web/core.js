@@ -38,7 +38,26 @@ async function poll() {
   setTimeout(poll, 16);
 }
 
+/* Snapshot theo Test Contract v1.0 (PRD-0) -> dạng client đang vẽ:
+ * hand / stoves[].dish là payload {order_id, dish_id, base_price} -> giữ payload ở *_payload, trường chính là dish_id;
+ * khách có order_status -> c.cooking = (assigned); sự kiện gather.amount / fish_caught.yield -> d.count. */
+function adaptSnap(s) {
+  const dn = (d) => (d && typeof d === "object" ? d.dish_id : d);
+  if (s.mode === "quan") {
+    s.hand_payload = s.hand || null;
+    s.hand = dn(s.hand) || null;
+    for (const st of s.stoves || []) { st.dish_payload = st.dish || null; st.dish = dn(st.dish) || null; }
+    for (const c of s.customers || []) { c.cooking = c.order_status === "assigned"; if (c.price === undefined) c.price = c.base_price; }
+  }
+  for (const e of s.events || []) {
+    const d = e.data || {};
+    if (d.count === undefined) { if (d.amount !== undefined) d.count = d.amount; else if (d.yield !== undefined) d.count = d.yield; }
+  }
+  return s;
+}
+
 function onSnap(s) {
+  adaptSnap(s);
   const fresh = !G.snap || s.mode !== G.lastMode || s.tick < G.lastTick;
   if (fresh) { G.seenTick = 0; G.particles = []; G.floaters = []; G.disp = null; onNewSession(s); }
   // sự kiện của một tick được ghi cùng lúc (dưới khóa) -> chỉ cần nhớ tick cuối đã xử lý

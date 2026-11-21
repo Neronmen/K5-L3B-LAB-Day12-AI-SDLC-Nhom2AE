@@ -20,3 +20,7 @@ Bằng chứng tự động: [`docs/proof/phase-1/tests.txt`](../proof/phase-1/t
 - Đạt: toàn bộ lõi gather + quan theo giả định; 51 test xanh.
 - Chưa chắc: tên/data sự kiện và vài luật quán chưa đối chiếu PRD-0 (xem clarify).
 - Phase sau: đối chiếu PRD-0, thêm ảnh chụp màn hình, chạy CI trên GitHub.
+
+## Cập nhật sau khi đọc PRD-0 (sau hạn tag phase-1)
+Nhóm làm Phase 1 khi chưa chép PRD-0 vào repo, nên luật quán và tên trường sự kiện dựa trên giả định. Sau khi đọc PRD-0, luật đã sửa theo đề (xem `docs/clarify.md` #12): sự kiện gather/quán đúng tên và trường, đơn hàng `order_id`/`order_status`, `hand` là payload, đóng ca trả tiền/rời bàn `closing`, bỏ món khi khách rời, bắt cá phải đủ chỗ cả đàn, kiểm mâu thuẫn scenario quán (mục D) trả mã 2.
+Test cập nhật theo đề: `tests/test_gather_rules.py`, `tests/test_quan_rules.py` — **59/59 OK**. Lý do đổi test: test cũ khẳng định giả định sai (ví dụ `hand` là chuỗi, khách có trường `cooking`), không phải sửa test cho xanh.

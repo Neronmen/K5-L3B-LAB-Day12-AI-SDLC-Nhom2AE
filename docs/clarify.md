@@ -1,6 +1,6 @@
 # Clarify — câu hỏi và câu trả lời (PO ghi, cả nhóm dùng chung)
 
-> PRD-0 chi tiết nằm trên lab board (mở theo giờ). Các dòng "giả định" dưới đây cần đối chiếu PRD-0; khác thì sửa luật + test.
+> Ban đầu chưa có PRD-0 nên nhóm tự giả định (dòng 2–11). Sau khi đọc PRD-0 trên lab board, các dòng đó được chốt ở cột "Trả lời" (dòng 12) và luật + test đã sửa theo.
 
 | # | Ngày giờ | Câu hỏi | Trả lời / giả định | Ai quyết |
 |---|---|---|---|---|
@@ -15,3 +15,4 @@
 | 9 | 2026-11-21 | Boa tính lúc nào | Giả định: lúc phục vụ, nếu kiên nhẫn còn ≥ `tip_min_patience_ratio`; trả cùng giá khi ăn xong (`paid`) | A |
 | 10 | 2026-11-21 | Khách bỏ đi khi món đang nấu | Giả định: món vẫn nấu xong, có thể bưng cho khách khác gọi cùng món | A |
 | 11 | 2026-11-21 | `burn_s = null` | Món chín không cháy (v1.0) | A |
+| 12 | 2026-11-21 | Đối chiếu giả định #2–#11 với PRD-0 (lab board, Phase 1) | #2 đúng (ngạt lần đầu t+59). #3 **sai**: thiếu chỗ cho cả yield thì không bắt, giữ đàn, không đặt hồi chiêu, `hold_full{action,fish_id,required,free}`. #4 **sai** tên trường: `gather.amount`, `fish_caught.yield`, `faint{cause,lost,hp}`, `oxygen_empty{oxygen_ticks}`, đơn hàng có `order_id`. #5 đúng. #6 đúng (chọn đều theo seed). #7 đúng. #8 **sửa**: bếp lấy đơn reserved cũ nhất theo `order_tick` rồi id bàn. #9 **sửa**: boa = floor(giá × tip_rate), uy tín +tip_reputation **lúc thu tiền**. #10 **sai**: khách rời thì bỏ món đang nấu/ready/trên tay. Thêm: hết ca khách đang ăn trả ngay (`paid` reason `closing`), khách chờ rời (`customer_left` reason `closing`, không trừ uy tín); `hand`/`dish` là payload `{order_id,dish_id,base_price}`. | PRD-0 |

@@ -22,7 +22,7 @@ Các tính năng của phase sau chưa nằm trong khung này.
 
 import math
 
-from ..ids import sort_by_id
+from ..ids import id_key, sort_by_id
 from ..inventory import hold_to_items
 from .ramp import ramp_velocity
 
@@ -140,7 +140,7 @@ class GatherSim:
             before = self.oxygen_ticks
             self.oxygen_ticks = max(0, self.oxygen_ticks - 1)
             if before > 0 and self.oxygen_ticks == 0:
-                events.append(("oxygen_empty", {}))
+                events.append(("oxygen_empty", {"oxygen_ticks": 0}))
         else:
             self.oxygen_ticks = min(self.oxygen_max, self.oxygen_ticks + int(self.t["oxygen_refill_per_tick"]))
         if under and self.oxygen_ticks == 0:
@@ -150,8 +150,9 @@ class GatherSim:
                 self.hp -= 1
                 events.append(("choke", {"hp": self.hp}))
                 if self.hp <= 0:
+                    lost = list(reversed(self.hold))  # bỏ giỏ LIFO: nhặt sau bỏ trước
                     self.hold = []
-                    events.append(("faint", {}))
+                    events.append(("faint", {"cause": "choke", "lost": lost, "hp": 0}))
                     self._finish("fainted", events)
                     return True
         else:
@@ -162,38 +163,37 @@ class GatherSim:
         return int(self.t["hold_capacity"]) - len(self.hold)
 
     def _gather_node(self, events):
+        """PRD-0 F.3: nút ready gần nhất trong bán kính (hòa theo id). Đủ chỗ -> +node_yield, gather; thiếu -> hold_full."""
         r = self.t["interact_radius"]
         cands = [n for n in sort_by_id(self.nodes)
                  if n["regrow_ticks"] == 0 and math.dist(self.pos, n["pos"]) <= r]
         if not cands:
             return
-        n = min(cands, key=lambda c: (math.dist(self.pos, c["pos"]), c["id"]))
-        if self._space() <= 0:
-            events.append(("hold_full", {"node_id": n["id"]}))
+        n = min(cands, key=lambda c: (math.dist(self.pos, c["pos"]), id_key(c["id"])))
+        need = int(self.t["node_yield"])
+        if self._space() < need:
+            events.append(("hold_full", {"action": "gather", "node_id": n["id"], "required": need, "free": self._space()}))
             return
-        count = min(int(self.t["node_yield"]), self._space())
-        self.hold.extend([n["kind"]] * count)
+        self.hold.extend([n["kind"]] * need)
         n["regrow_ticks"] = int(round(self.t["regrow_s"] * TICK))
-        events.append(("gather", {"node_id": n["id"], "kind": n["kind"], "count": count}))
-        if self._space() <= 0:
-            events.append(("hold_full", {"node_id": n["id"]}))
+        events.append(("gather", {"node_id": n["id"], "kind": n["kind"], "amount": need}))
 
     def _catch_fish(self, events):
+        """PRD-0 F.4: đàn gần nhất trong bán kính (hòa theo id). Đủ chỗ cả yield -> fish_caught + hồi chiêu;
+        thiếu -> hold_full, giữ đàn, không đặt hồi chiêu, không thử đàn khác. Không có đàn -> không gì cả."""
         r = self.t["catch_radius"]
         cands = [f for f in sort_by_id(self.fish) if math.dist(self.pos, f["pos"]) <= r]
         if not cands:
             return
-        f = min(cands, key=lambda c: (math.dist(self.pos, c["pos"]), c["id"]))
-        if self._space() <= 0:
-            events.append(("hold_full", {"fish_id": f["id"]}))
+        f = min(cands, key=lambda c: (math.dist(self.pos, c["pos"]), id_key(c["id"])))
+        need = int(self.t["fish_yield"][f["kind"]])
+        if self._space() < need:
+            events.append(("hold_full", {"action": "catch", "fish_id": f["id"], "required": need, "free": self._space()}))
             return
-        count = min(int(self.t["fish_yield"][f["kind"]]), self._space())
-        self.hold.extend([f["kind"]] * count)
+        self.hold.extend([f["kind"]] * need)
         self.fish.remove(f)
         self.catch_cd_ticks = int(round(self.t["catch_cooldown_s"] * TICK))
-        events.append(("fish_caught", {"fish_id": f["id"], "kind": f["kind"], "count": count}))
-        if self._space() <= 0:
-            events.append(("hold_full", {"fish_id": f["id"]}))
+        events.append(("fish_caught", {"fish_id": f["id"], "kind": f["kind"], "yield": need}))
 
     # --- tiện ích ---------------------------------------------------------------
     def _at_surface(self) -> bool:

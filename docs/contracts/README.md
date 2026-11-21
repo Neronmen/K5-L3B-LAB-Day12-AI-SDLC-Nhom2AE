@@ -9,30 +9,32 @@ Client **chỉ đọc** `GET /state` (snapshot giống headless + `meta`, `menu`
 
 | Snapshot gather | Snapshot quan |
 |---|---|
-| `player{pos, vel, heading_deg, oxygen_ticks, oxygen_max_ticks, hp, hp_max, zero_oxy_ticks, invuln_ticks, catch_cd_ticks, at_surface}` | `player{pos, vel}`, `hand` (id món hoặc null) |
+| `player{pos, vel, heading_deg, oxygen_ticks, oxygen_max_ticks, hp, hp_max, zero_oxy_ticks, invuln_ticks, catch_cd_ticks, at_surface}` | `player{pos, vel}`, `hand` (payload `{order_id, dish_id, base_price}` hoặc null) |
 | `hold[]` (thứ tự nhặt, cuối = mới nhất), `hold_count`, `hold_capacity` | `stock{}`, `reserved{}` (tổng giữ chỗ) |
-| `nodes[{id, pos, kind, ready, regrow_ticks}]` | `stoves[{id, pos, state idle/cooking/ready, dish, customer_id, cook_ticks_left, ready_ticks}]` |
-| `fish[{id, pos, kind, heading_deg}]` | `tables[{id, pos, customer_id}]`, `customers[{id, table_id, dish_id, state waiting/eating, patience_ticks_left, eat_ticks_left, price, tip, cooking, reserved}]`, `shift_earned`, `served_count`, `left_count` |
+| `nodes[{id, pos, kind, ready, regrow_ticks}]` | `stoves[{id, pos, state idle/cooking/ready, dish (payload|null), cook_ticks_left, ready_ticks}]` |
+| `fish[{id, pos, kind, heading_deg}]` | `tables[{id, pos, customer_id}]`, `customers[{id, table_id, dish_id, order_tick, state waiting/eating, patience_ticks_left, eat_ticks_left, order_status reserved/assigned/unfulfillable/served, reserved, base_price, tip}]` (chỉ khách còn ngồi), `shift_earned`, `served_count`, `left_count` |
 
-## 3. Sự kiện
+## 3. Sự kiện (đã đối chiếu PRD-0 mục E)
 | Tên | data | Ai phát | Client dùng để |
 |---|---|---|---|
-| `dive` / `surface` | `{pos}` | gather | té nước, âm thanh |
-| `oxygen_empty` | `{}` | gather | cảnh báo |
-| `choke` | `{hp}` | gather | rung màn, chớp đỏ |
-| `faint` | `{}` | gather | rung màn |
-| `gather` | `{node_id, kind, count}` | gather | hạt hoa, chữ bay |
+| `dive` / `surface` | `{pos}` sau di chuyển, chỉ khi đổi phía mặt nước | gather | té nước, âm thanh |
+| `oxygen_empty` | `{oxygen_ticks: 0}` | gather | cảnh báo |
+| `choke` | `{hp}` sau trừ | gather | rung màn, chớp đỏ |
+| `faint` | `{cause: "choke", lost: [kind… nhặt sau bỏ trước], hp: 0}` | gather | rung màn |
+| `gather` | `{node_id, kind, amount}` | gather | hạt hoa, chữ bay |
 | `node_regrown` | `{node_id}` | gather | lấp lánh |
-| `fish_caught` | `{fish_id, kind, count}` | gather | bong bóng, chữ bay |
-| `hold_full` | `{node_id}` hoặc `{fish_id}` | gather | "Giỏ đầy!" |
-| `gather_end` | `{reason docked/time/fainted, inventory{items}}` | gather | màn tổng kết |
-| `customer_arrived` | `{customer_id, table_id, dish_id}` | quan | chuông |
-| `no_dish` | `{table_id}` | quan | thông báo |
-| `cook_started` / `dish_ready` | `{stove_id, dish_id[, customer_id]}` | quan | lửa, "Chín rồi!" |
-| `dish_picked` | `{stove_id, dish_id}` | quan | âm thanh |
-| `served` | `{customer_id, table_id, dish_id, tip, reputation}` | quan | "boa", hạt |
-| `paid` | `{customer_id, table_id, dish_id, price, tip, amount}` | quan | xu bay, +tiền |
-| `customer_left` | `{customer_id, table_id, dish_id, reputation}` | quan | khói, −uy tín |
-| `quan_end` | `{reason, money, earned, shift_earned, reputation}` | quan | màn tổng kết |
+| `fish_caught` | `{fish_id, kind, yield}` — chỉ khi đủ chỗ cả yield | gather | bong bóng, chữ bay |
+| `hold_full` | `{action: gather|catch, node_id|fish_id, required, free}` | gather | "Giỏ đầy!" |
+| `gather_end` | `{reason: time|docked|fainted, inventory: {items}}` | gather | màn tổng kết |
+| `customer_arrived` | `{order_id, table_id, dish_id}` | quan | chuông |
+| `no_dish` | `{}` (có bàn mà thiếu món) | quan | thông báo |
+| `cook_started` | `{stove_id, order_id, dish_id, items: [kind… sắp theo kind], base_price}` | quan | lửa |
+| `dish_ready` / `dish_picked` | `{stove_id, order_id, dish_id}` | quan | "Chín rồi!" |
+| `served` | `{order_id, table_id, dish_id, patience_ticks_left, base_price, tip}` | quan | "boa", hạt |
+| `paid` | `{order_id, table_id, base_price, tip, amount, reason: finished_eating|closing}` | quan | xu bay, +tiền |
+| `customer_left` | `{order_id, table_id, reason: patience|closing, reputation}` | quan | khói, −uy tín |
+| `quan_end` | `{reason: "time", money, earned, shift_earned, reputation}` | quan | màn tổng kết |
+
+Client (`chonoi/web/core.js` → `adaptSnap`) đổi payload `hand`/`dish` sang `dish_id` và `amount`/`yield` sang `count` để phần vẽ không phải đổi; payload gốc giữ ở `hand_payload` / `dish_payload`.
 
 Tên/data nào khác PRD-0 thì PRD-0 thắng: sửa sim + bảng này + `docs/clarify.md`.

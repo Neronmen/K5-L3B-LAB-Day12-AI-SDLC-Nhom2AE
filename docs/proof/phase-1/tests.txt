@@ -1,7 +1,8 @@
-# Kết quả test (phase-1) tại commit 4731f79 (trước commit hiện tại nếu có thay đổi chưa commit)
+# Kết quả test (phase-1) tại commit 573e39a (trước commit hiện tại nếu có thay đổi chưa commit)
 
 test_bat_ca_va_hoi_chieu (test_gather_rules.Catching.test_bat_ca_va_hoi_chieu) ... ok
 test_khong_bat_o_mat_nuoc (test_gather_rules.Catching.test_khong_bat_o_mat_nuoc) ... ok
+test_thieu_cho_khong_bat_giu_dan_khong_hoi_chieu (test_gather_rules.Catching.test_thieu_cho_khong_bat_giu_dan_khong_hoi_chieu) ... ok
 test_gio_day_hold_full (test_gather_rules.Gathering.test_gio_day_hold_full) ... ok
 test_hai_nut_mat_nut_va_moc_lai (test_gather_rules.Gathering.test_hai_nut_mat_nut_va_moc_lai) ... ok
 test_khong_hai_duoi_nuoc (test_gather_rules.Gathering.test_khong_hai_duoi_nuoc) ... ok
@@ -13,6 +14,10 @@ test_next_khi_chua_xong_bi_bo_qua (test_live_flow.LiveFlow.test_next_khi_chua_xo
 test_sang_toi_mang_kho_roi_ngay_moi (test_live_flow.LiveFlow.test_sang_toi_mang_kho_roi_ngay_moi) ... ok
 test_start_quan_co_kho_mau (test_live_flow.LiveFlow.test_start_quan_co_kho_mau) ... ok
 test_tam_dung_khong_buoc (test_live_flow.LiveFlow.test_tam_dung_khong_buoc) ... ok
+test_escape_ky_tu_ong (test_log_ai_usage.LogAiUsageTest.test_escape_ky_tu_ong) ... ok
+test_tao_file_moi_neu_chua_co (test_log_ai_usage.LogAiUsageTest.test_tao_file_moi_neu_chua_co) ... ok
+test_them_mot_dong_giu_dong_cu (test_log_ai_usage.LogAiUsageTest.test_them_mot_dong_giu_dong_cu) ... ok
+test_thieu_tham_so_ma_thoat_2 (test_log_ai_usage.LogAiUsageTest.test_thieu_tham_so_ma_thoat_2) ... ok
 test_bad_frames_raise (test_python_starter_units.Units.test_bad_frames_raise) ... ok
 test_catch_is_a_v10_button_and_attack_is_not (test_python_starter_units.Units.test_catch_is_a_v10_button_and_attack_is_not) ... ok
 test_id_allocator_continues_after_max (test_python_starter_units.Units.test_id_allocator_continues_after_max) ... ok
@@ -20,13 +25,16 @@ test_id_sorting (test_python_starter_units.Units.test_id_sorting) ... ok
 test_input_edges_and_inherit (test_python_starter_units.Units.test_input_edges_and_inherit) ... ok
 test_live_inputs_keep_fast_tap_edge (test_python_starter_units.Units.test_live_inputs_keep_fast_tap_edge) ... ok
 test_session_steps_gather_and_dock (test_python_starter_units.Units.test_session_steps_gather_and_dock) ... ok
-test_giu_cho_vuot_kho_exit_2 (test_quan_rules.Customers.test_giu_cho_vuot_kho_exit_2) ... ok
+test_het_ca_khach_an_tra_tien (test_quan_rules.Closing.test_het_ca_khach_an_tra_tien) ... ok
+test_het_ca_khach_cho_roi_khong_tru_uy_tin (test_quan_rules.Closing.test_het_ca_khach_cho_roi_khong_tru_uy_tin) ... ok
 test_het_kien_nhan_bo_di_tru_uy_tin (test_quan_rules.Customers.test_het_kien_nhan_bo_di_tru_uy_tin) ... ok
-test_khach_den_theo_lich_va_giu_cho (test_quan_rules.Customers.test_khach_den_theo_lich_va_giu_cho) ... ok
-test_no_dish_khi_kho_rong (test_quan_rules.Customers.test_no_dish_khi_kho_rong) ... ok
-test_het_ca (test_quan_rules.FullLoop.test_het_ca) ... ok
-test_nau_bung_phuc_vu_tra_tien_co_boa (test_quan_rules.FullLoop.test_nau_bung_phuc_vu_tra_tien_co_boa) ... ok
-test_sai_mon_khong_phuc_vu (test_quan_rules.FullLoop.test_sai_mon_khong_phuc_vu) ... ok
+test_khach_den_theo_lich_giu_cho (test_quan_rules.Customers.test_khach_den_theo_lich_giu_cho) ... ok
+test_no_dish_data_rong (test_quan_rules.Customers.test_no_dish_data_rong) ... ok
+test_khach_bo_di_thi_bo_mon_dang_nau (test_quan_rules.Kitchen.test_khach_bo_di_thi_bo_mon_dang_nau) ... ok
+test_nau_lay_mon_payload (test_quan_rules.Kitchen.test_nau_lay_mon_payload) ... ok
+test_mau_thuan_exit_2 (test_quan_rules.ScenarioErrors.test_mau_thuan_exit_2) ... ok
+test_kien_nhan_duoi_nguong_khong_boa (test_quan_rules.Serving.test_kien_nhan_duoi_nguong_khong_boa) ... ok
+test_phuc_vu_boa_uy_tin_khi_thu_tien (test_quan_rules.Serving.test_phuc_vu_boa_uy_tin_khi_thu_tien) ... ok
 test_con_01_ticks_zero_and_end_line (test_smoke_p1.Contract.test_con_01_ticks_zero_and_end_line) ... ok
 test_con_02_deterministic_bytes (test_smoke_p1.Contract.test_con_02_deterministic_bytes) ... ok
 test_con_03_bad_input_exit_2 (test_smoke_p1.Contract.test_con_03_bad_input_exit_2) ... ok
@@ -57,6 +65,6 @@ test_too_few_members (test_team_check.TeamCheck.test_too_few_members) ... ok
 test_wrong_size_duplicate_and_outsider (test_team_check.TeamCheck.test_wrong_size_duplicate_and_outsider) ... ok
 
 ----------------------------------------------------------------------
-Ran 51 tests in 6.530s
+Ran 59 tests in 6.951s
 
 OK

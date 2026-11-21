@@ -351,7 +351,8 @@ function hintQuan(v, s, p) {
     } else msg = "Đang nấu…";
   } else {
     const c = (s.customers || []).find((c) => c.table_id === obj.id);
-    if (c && c.state === "waiting") msg = s.hand === c.dish_id ? "E  Mời khách dùng" : s.hand ? "Sai món rồi!" : "Khách chờ " + (DISH_NAME[c.dish_id] || "");
+    const hp = s.hand_payload;  // phục vụ theo đơn (order_id = id khách), không chỉ theo tên món
+    if (c && c.state === "waiting") msg = hp && hp.order_id === c.id ? "E  Mời khách dùng" : hp ? "Món này của bàn khác!" : "Khách chờ " + (DISH_NAME[c.dish_id] || "");
   }
   if (msg) keyHint(v.sx(obj.pos[0]), v.sy(obj.pos[1]) + 1.3 * v.u + Math.sin(G.time * 5) * 3, msg, v.u * 0.8);
 }

@@ -33,10 +33,10 @@ class Oxygen(unittest.TestCase):
         with Workdir() as w:
             rows = run(w, {"player": {"pos": [50, 10], "oxygen_ticks": 1}, "hold": ["ca_loc"]}, [], 400,
                        ("--inventory-out", w.path("inv.json")))
-            self.assertEqual(len(events(rows, "oxygen_empty")), 1)
+            self.assertEqual([e["data"] for e in events(rows, "oxygen_empty")], [{"oxygen_ticks": 0}])
             chokes = events(rows, "choke")
             self.assertEqual([e["tick"] for e in chokes], [60, 120, 180])
-            self.assertEqual(len(events(rows, "faint")), 1)
+            self.assertEqual([e["data"] for e in events(rows, "faint")], [{"cause": "choke", "lost": ["ca_loc"], "hp": 0}])
             end = events(rows, "gather_end")[0]
             self.assertEqual(end["data"]["reason"], "fainted")
             self.assertEqual(end["data"]["inventory"], {"items": {}})
@@ -49,7 +49,7 @@ class Gathering(unittest.TestCase):
         with Workdir() as w:
             rows = run(w, {"player": {"pos": [12, 0]}}, [{"tick": 0, "interact": True}], 1300)
             g = events(rows, "gather")
-            self.assertEqual(g[0]["data"]["node_id"], "N1")
+            self.assertEqual(g[0]["data"], {"node_id": "N1", "kind": "bong_dien_dien", "amount": 1})
             self.assertEqual(snapshots(rows)[1]["hold"], ["bong_dien_dien"])
             self.assertEqual(events(rows, "node_regrown")[0]["tick"], 1 + 1200)
 
@@ -61,7 +61,8 @@ class Gathering(unittest.TestCase):
     def test_gio_day_hold_full(self):
         with Workdir() as w:
             rows = run(w, {"player": {"pos": [12, 0]}, "hold": ["ca_loc"] * 12}, [{"tick": 0, "interact": True}], 2)
-            self.assertEqual(len(events(rows, "hold_full")), 1)
+            self.assertEqual([e["data"] for e in events(rows, "hold_full")],
+                             [{"action": "gather", "node_id": "N1", "required": 1, "free": 0}])
             self.assertEqual(events(rows, "gather"), [])
 
 
@@ -74,8 +75,18 @@ class Catching(unittest.TestCase):
             rows = run(w, block, ins, 3)
             caught = events(rows, "fish_caught")
             self.assertEqual(len(caught), 1)  # tick 2 bị hồi chiêu chặn
-            self.assertEqual(caught[0]["data"]["fish_id"], "F1")
+            self.assertEqual(caught[0]["data"], {"fish_id": "F1", "kind": "ca_linh", "yield": 3})
             self.assertEqual(snapshots(rows)[-1]["hold"], ["ca_linh"] * 3)
+
+    def test_thieu_cho_khong_bat_giu_dan_khong_hoi_chieu(self):
+        with Workdir() as w:
+            block = {"player": {"pos": [15, 5]}, "hold": ["ca_loc"] * 10,
+                     "fish": [{"id": "F1", "kind": "ca_linh", "pos": [15, 5]}]}
+            rows = run(w, block, [{"tick": 0, "catch": True}], 1)
+            self.assertEqual([e["data"] for e in events(rows, "hold_full")],
+                             [{"action": "catch", "fish_id": "F1", "required": 3, "free": 2}])
+            last = snapshots(rows)[-1]
+            self.assertEqual((len(last["fish"]), last["player"]["catch_cd_ticks"], last["hold_count"]), (1, 0, 10))
 
     def test_khong_bat_o_mat_nuoc(self):
         with Workdir() as w:
