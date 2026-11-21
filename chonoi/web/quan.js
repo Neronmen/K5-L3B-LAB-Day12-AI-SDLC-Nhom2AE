@@ -149,6 +149,10 @@ function drawQuanScene(w, h, s) {
       ctx.beginPath(); ctx.ellipse(px, py, r * u, r * zu, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]);
     }
     senDust(p, moving);   // bụi chân (anim.js)
+    // tiếng bếp theo vị trí: to hơn khi đứng gần bếp đang nấu, lệch trái/phải theo hướng
+    let near = null, nd = 1e9;
+    for (const st of s.stoves || []) { const dd = Math.hypot(st.pos[0] - p.pos[0], st.pos[1] - p.pos[1]); if (st.state === "cooking" && dd < nd) { nd = dd; near = st; } }
+    Audio2.loop("stove", near && !G.paused ? clamp(1.15 - nd / 10, 0.12, 1) : 0, near ? (near.pos[0] - p.pos[0]) / 7 : 0);
     const emo = senEmote(moving);
     items.push({ z: G.disp[1] - 0.01, draw: () => drawSenStand(px, py, u, { t, moving, dir: Quan.dir, face: Quan.face, hand: s.hand, emo }) });
   }

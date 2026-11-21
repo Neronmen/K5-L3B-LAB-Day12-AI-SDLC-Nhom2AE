@@ -20,6 +20,7 @@ function frame(now) {
   UI.btns = [];
   stepParticles(dt);
   updateTutorial();
+  if (s) Audio2.ambience(G.scene === "title" ? "title" : s.mode);   // sóng, chim, dế, chợ xa (audio.js)
   ctx.save();
   if (G.shake > 0) { ctx.translate(fxRand(-G.shake, G.shake), fxRand(-G.shake, G.shake)); G.shake = Math.max(0, G.shake - dt * 40); }
   if (!s) {
