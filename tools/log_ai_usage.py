@@ -20,7 +20,7 @@ HEADER = ("# Nhật ký dùng AI (theo phase và theo người)\n\n"
 def cell(value: str) -> str:
     """Một ô bảng Markdown: một dòng, escape `|`."""
     s = " ".join(str(value).split())  # gộp xuống dòng / khoảng trắng thừa
-    return s.replace("\|", "|").replace("|", "\|") or "-"
+    return s.replace(r"\|", "|").replace("|", r"\|") or "-"
 
 
 def make_row(a) -> str:

@@ -45,7 +45,7 @@ class LogAiUsageTest(unittest.TestCase):
     def test_escape_ky_tu_ong(self):
         p = run("--phase", "2", "--who", "ninh", "--tool", "a|b", "--task", "x | y", "--file", self.path)
         self.assertEqual(p.returncode, 0, p.stderr)
-        self.assertIn("| 2 | ninh | a\|b | x \| y | chưa đo | - |", self.read())
+        self.assertIn(r"| 2 | ninh | a\|b | x \| y | chưa đo | - |", self.read())
 
     def test_thieu_tham_so_ma_thoat_2(self):
         p = run("--phase", "2", "--who", "ninh", "--file", self.path)
