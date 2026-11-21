@@ -6,6 +6,9 @@ Máy chủ HTTP nhỏ (ThreadingHTTPServer) phục vụ `chonoi/web/index.html` 
     GET  /state  -> snapshot JSON hiện tại (cùng trường như dòng snapshot của headless) + `meta` + `events`
     POST /input  -> {"move": [a, b], "interact": bool, "catch": bool}   (trạng thái phím đang giữ)
     POST /restart -> chơi lại từ đầu (cùng seed, cùng scenario)
+    POST /next    -> (nhóm thêm) chuyển buổi: gather xong -> quan với kho vừa lặn; quan xong -> sáng ngày mới
+    POST /start   -> (nhóm thêm) {"mode": "gather"|"quan"}: vào lại một buổi từ đầu (màn hình chính)
+    GET  /<tệp>.js|.css -> tệp tĩnh trong chonoi/web (client nhiều tệp)
 
 Mô phỏng chạy 60 tick/s trong một luồng nền, dùng CÙNG lớp sim như headless (qua `runner.Session`).
 Client chỉ ĐỌC snapshot và tự bỏ qua trường chưa có, nên luật do nhóm viết thêm trường nào cũng không vỡ.
@@ -15,6 +18,7 @@ Ngẫu nhiên vẫn đi qua `Streams` (seed); chỉ nhịp chạy theo đồng h
 import argparse
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -32,6 +36,7 @@ WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 TICK_S = 1.0 / 60.0
 MAX_BODY = 4096
 RECENT_EVENTS = 40
+STATIC = re.compile(r"^/[a-z0-9_-]+\.(js|css)$")  # chỉ tệp phẳng trong web/, không cho ../
 
 
 class LiveGame:
@@ -39,7 +44,10 @@ class LiveGame:
 
     def __init__(self, mode, tuning, scenario, seed, inventory=None, inventory_out=None):
         self._args = (mode, tuning, scenario, seed, inventory)
+        self._first = self._args
         self.mode = mode
+        self.day = 1
+        self.total_earned = 0
         self.tuning = tuning
         self.inventory_out = inventory_out
         self._lock = threading.Lock()
@@ -53,6 +61,7 @@ class LiveGame:
         self.events = []
         self._saved = False
         self.error = None
+        self.paused = False
 
     # --- luồng nền ----------------------------------------------------------------
     def start(self):
@@ -84,7 +93,7 @@ class LiveGame:
 
     def _tick_once(self):
         s = self.session
-        if s.done:
+        if s.done or self.paused:
             return
         for row in s.step(self.inputs.advance()):
             self.events.append(row)
@@ -102,10 +111,14 @@ class LiveGame:
         with self._lock:
             snap = self.session.snapshot()
             snap["meta"] = self.tuning[self.mode]
+            snap["menu"] = self.tuning["menu"]
+            snap["story"] = {"day": self.day, "total_earned": self.total_earned + (
+                self.session.sim.earned if self.mode == "quan" else 0)}
             snap["events"] = list(self.events)
             snap["finished"] = self.session.done
             snap["reason"] = self.session.sim.reason if self.session.done else None
             snap["error"] = self.error
+            snap["paused"] = self.paused
             return json.dumps(snap, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
     def set_input(self, body: dict):
@@ -127,6 +140,36 @@ class LiveGame:
     def restart(self):
         with self._lock:
             self._reset()
+
+    def _switch(self, mode, inventory, scenario=None):
+        _, tuning, sc, seed, _ = self._first
+        if scenario is None:
+            scenario = sc if mode == self._first[0] else {}
+        self._args = (mode, tuning, scenario, seed + self.day - 1, inventory)
+        self.mode = mode
+        self._reset()
+
+    def next_phase(self):
+        """Sáng xong -> tối (kho mang theo); tối xong -> sáng ngày mới. Chưa xong buổi thì bỏ qua."""
+        with self._lock:
+            if not self.session.done:
+                return
+            if self.mode == "gather":
+                self._switch("quan", self.session.sim.inventory_items())
+            else:
+                self.total_earned += self.session.sim.earned
+                self.day += 1
+                self._switch("gather", None)
+
+    def start_mode(self, mode):
+        if mode not in ("gather", "quan"):
+            raise ValueError("mode phải là gather hoặc quan")
+        with self._lock:
+            self.day, self.total_earned = 1, 0
+            inv = self._first[4] if mode == "quan" else None
+            if mode == "quan" and inv is None and mode != self._first[0]:
+                inv = {"ca_loc": 2, "ca_linh": 3, "bong_dien_dien": 1, "bong_sung": 4}  # kho thử khi vào thẳng quán
+            self._switch(mode, inv)
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -154,6 +197,13 @@ class _Handler(BaseHTTPRequestHandler):
                     self._send(200, f.read(), "text/html; charset=utf-8")
             except OSError:
                 self._send(404, b'{"error":"thieu index.html"}')
+        elif STATIC.match(path):
+            try:
+                with open(os.path.join(WEB_DIR, path[1:]), "rb") as f:
+                    ctype = "text/css; charset=utf-8" if path.endswith(".css") else "text/javascript; charset=utf-8"
+                    self._send(200, f.read(), ctype)
+            except OSError:
+                self._send(404, b'{"error":"khong co"}')
         else:
             self._send(404, b'{"error":"khong co"}')
 
@@ -175,6 +225,15 @@ class _Handler(BaseHTTPRequestHandler):
                 self.game.set_input(body)
             elif path == "/restart":
                 self.game.restart()
+            elif path == "/pause":
+                body = json.loads(raw.decode("utf-8") or "{}")
+                with self.game._lock:
+                    self.game.paused = bool(body.get("paused")) if isinstance(body, dict) else False
+            elif path == "/next":
+                self.game.next_phase()
+            elif path == "/start":
+                body = json.loads(raw.decode("utf-8") or "{}")
+                self.game.start_mode(body.get("mode") if isinstance(body, dict) else None)
             else:
                 self._send(404, b'{"error":"khong co"}')
                 return
@@ -214,6 +273,11 @@ class LiveServer:
 
 
 def main(argv=None) -> int:
+    for stream in (sys.stdout, sys.stderr):  # console Windows (cp1252) không in được tiếng Việt
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
     p = argparse.ArgumentParser(prog="chonoi.live", description="Chơi trực tiếp trên trình duyệt (starter).")
     p.add_argument("--mode", required=True, choices=["gather", "quan"])
     p.add_argument("--seed", type=int, default=1)
