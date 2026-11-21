@@ -1,5 +1,5 @@
 # Changelog
-## Unreleased
+## v1.0.0 — 2026-11-21
 ### Thêm
 - Luật gather: oxy, ngạt, Máu, ngất (mất giỏ), dive/surface, hái nút + mọc lại, bắt cá + hồi chiêu, giỏ LIFO, hold_full.
 - Luật quan: khách theo lịch, chọn món nấu được, giữ chỗ nguyên liệu, kiên nhẫn/bỏ đi, no_dish, bếp nấu/chín, bưng, phục vụ, ăn xong trả tiền, boa, uy tín, hết ca.
@@ -14,4 +14,5 @@
   icon/xu bay vào HUD, tiền count-up, sao lấp lánh/rạn, thẻ món khóa; hoạt ảnh Út Sen, 6 kiểu khách đi vào/bỏ đi/vẫy tay,
   cá quẫy/tản bầy; nhạc 2 lớp crossfade, âm thanh môi trường, tiếng bếp theo vị trí.
 ### Sửa
+- `log_ai_usage.py` văng lỗi khi file nhật ký và thư mục hiện tại khác ổ đĩa (Windows).
 - Camera buổi sáng thành NaN (mất Út Sen) khi tab có kích thước 0 px lúc tải.
