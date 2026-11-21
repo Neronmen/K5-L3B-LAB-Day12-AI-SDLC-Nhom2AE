@@ -142,7 +142,7 @@ function drawGatherScene(w, h, s, opts = {}) {
     const blink = p.invuln_ticks > 0 && Math.floor(t * 12) % 2;
     // bong bóng thở ra
     if (under && Math.random() < (moving ? 0.12 : 0.05)) G.particles.push({ x: G.disp[0] + Gather.face * 0.5, y: G.disp[1] - 0.2, vx: fxRand(-0.2, 0.2), vy: -fxRand(1.2, 2), g: 0, life: 0, max: fxRand(1, 2.2), size: fxRand(0.06, 0.16), kind: "bubble" });
-    if (!blink) drawSenSide(sx(G.disp[0]), sy(G.disp[1]) + (under ? 0 : 0.1 * u), u * 1.15,
+    if (!blink) drawSenSide(sx(G.disp[0]), sy(G.disp[1]) + (under ? 0 : 0.1 * u), u * 1.45,
       { face: Gather.face, t, under, moving, pitch: under ? Math.atan2(vd, Math.abs(vx) + 0.01) * 0.6 * (Math.abs(vx) > 0.2 || Math.abs(vd) > 0.2 ? 1 : 0) : 0 });
     // gợi ý thao tác
     hintGather(v, s, p, under);

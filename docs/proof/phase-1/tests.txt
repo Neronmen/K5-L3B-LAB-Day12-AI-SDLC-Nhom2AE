@@ -1,4 +1,4 @@
-# Kết quả test (phase-1) tại commit f0a1906 (trước commit hiện tại nếu có thay đổi chưa commit)
+# Kết quả test (phase-1) tại commit 77a1c9b (trước commit hiện tại nếu có thay đổi chưa commit)
 
 test_bat_ca_va_hoi_chieu (test_gather_rules.Catching.test_bat_ca_va_hoi_chieu) ... ok
 test_khong_bat_o_mat_nuoc (test_gather_rules.Catching.test_khong_bat_o_mat_nuoc) ... ok
@@ -57,6 +57,6 @@ test_too_few_members (test_team_check.TeamCheck.test_too_few_members) ... ok
 test_wrong_size_duplicate_and_outsider (test_team_check.TeamCheck.test_wrong_size_duplicate_and_outsider) ... ok
 
 ----------------------------------------------------------------------
-Ran 51 tests in 5.997s
+Ran 51 tests in 6.729s
 
 OK
