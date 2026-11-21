@@ -23,6 +23,21 @@ python3 -m chonoi.live --mode gather                                # chơi th�
 
 Game cần chế độ **headless** theo Test Contract (`python3 -m chonoi.headless --mode gather|quan …`) để được chạy và chấm tự động. **Công nghệ không ràng buộc**: khung Python trong `chonoi/` chỉ là gợi ý, chi tiết ở [`docs/STARTER.md`](docs/STARTER.md).
 
+## Chơi game của nhóm
+
+```bash
+python -m chonoi.live --mode gather      # Windows: python; Linux/macOS: python3
+```
+Mở địa chỉ in ra → **Enter** bắt đầu một ngày. Sáng: **WASD** bơi, **E** hái bông / cập bến, **Space** bắt cá (dưới nước), canh thanh oxy. Cập bến → **Enter** mở quán tối: **E** ở bếp để nấu món khách gọi, **E** lấy món khi chín, **E** ở bàn để mời khách. **P** tạm dừng, **M** tắt tiếng, **R** chơi lại buổi.
+
+## Sáng tạo của nhóm
+(Chỉ ở client trình duyệt; headless không đổi.)
+- Một ngày trọn vẹn: sáng lặn → tối mở quán bằng đúng nguyên liệu vừa lặn → ngày mới, cộng dồn tổng thu.
+- Cảnh sông vẽ bằng code: bình minh chuyển sang trưa theo đồng hồ, hàng dừa, ghe chợ nổi có cây bẹo, nhà sàn, tia nắng, rong đáy sông, nước tối dần theo độ sâu.
+- Út Sen mặc áo bà ba, đội nón lá, có hoạt ảnh bơi; đàn cá linh bơi thành bầy, cá lóc có vằn.
+- Quán trên ghe ban đêm: đèn lồng đung đưa, lò than có lửa và khói, khách mỗi người một kiểu, bong bóng gọi món, vòng kiên nhẫn đổi màu.
+- Âm thanh tổng hợp + nhạc nền ngũ cung kiểu đờn ca tài tử.
+
 ## Tự do sáng tạo
 
 Ngoài phần đề yêu cầu, nhóm được **thêm** nhân vật, loài cá/cây, sinh vật, món, bản đồ, cơ chế, câu chuyện, đồ họa, âm nhạc… với ba điều kiện: **không phá phần cố định** (tắt ở headless), ghi mục **"Sáng tạo của nhóm"** trong README của nhóm, và **làm lõi đúng trước**.
