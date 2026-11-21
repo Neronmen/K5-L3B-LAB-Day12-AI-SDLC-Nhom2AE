@@ -5,7 +5,7 @@
 | Thành viên | GitHub handle | Module chính | Vai quy trình | Người dự phòng cho |
 |---|---|---|---|---|
 | Phạm Nguyên Khoa (2A202603795) | Neronmen | `sim/gather`, `sim/quan`, `qa` | Integrator · QA lead | Nguyễn Ngọc Ninh |
-| Nguyễn Ngọc Ninh (2A202603774) | … | `client/ui`, docs | PO · Scrum/Release | Phạm Nguyên Khoa |
+| Nguyễn Ngọc Ninh (2A202603774) | sevenminutes2311-creator | `client/ui`, docs | PO · Scrum/Release | Phạm Nguyên Khoa |
 
 **Vai quy trình:** PO (đầu mối hỏi giảng viên, giữ `docs/clarify.md`) · Integrator (giữ `docs/contracts/`, gắn tag) · QA lead · Scrum/Release. Có thể kiêm.
 
