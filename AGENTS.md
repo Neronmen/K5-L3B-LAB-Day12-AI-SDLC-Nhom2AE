@@ -11,7 +11,7 @@
 ## Cấu trúc & quy ước
 - (Starter Python là TÙY CHỌN; nhóm có thể dùng ngôn ngữ khác nếu giữ Test Contract.) Khung do giảng viên cấp: `chonoi/{headless,inputs,scenario,contract,rng,ids,jsonl,inventory,runner,live}.py` và `chonoi/web/`. Hạn chế sửa; nếu phải sửa thì báo cả nhóm và ghi lại lý do.
 - Luật chơi của nhóm: `chonoi/sim/gather.py`, `chonoi/sim/quan.py`. Test luật: `tests/test_gather_rules.py`, `tests/test_quan_rules.py`, `tests/test_live_flow.py`.
-- Client (chỉ đọc snapshot, không chứa luật): `chonoi/web/{core,audio,art,gather,quan,main}.js`. Hợp đồng snapshot/sự kiện: `docs/contracts/README.md`.
+- Client (chỉ đọc snapshot, không chứa luật): `chonoi/web/{core,audio,art,anim,gather,quan,weather,ui,hud,main}.js` — `ui` (chuyển cảnh, hướng dẫn, menu, cài đặt, cảm ứng, thành tích), `hud` (bản đồ nhỏ, icon bay), `anim` (hoạt ảnh nhân vật/khách), `weather` (không khí). Không có Node thì kiểm JS bằng cách tải trang và đọc console. Hợp đồng snapshot/sự kiện: `docs/contracts/README.md`.
 - `chonoi/live.py` đã được nhóm mở rộng (`/next`, `/start`, `/pause`, phục vụ tệp `.js`) — xem ADR-0001.
 - **Số liệu chỉ đọc từ `game.contract.json` / dữ liệu**, không hard-code trong luật.
 - Mọi số ngẫu nhiên đi qua `Streams` (`chonoi/rng.py`); không dùng `random` toàn cục, không dùng đồng hồ hệ thống.
