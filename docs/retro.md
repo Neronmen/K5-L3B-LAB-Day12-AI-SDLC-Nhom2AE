@@ -13,3 +13,4 @@
 - Số liệu: commit — Khoa (Neronmen) 6, Ninh (sevenminutes2311-creator) 11; đọc code của nhau — Khoa review 11 commit của Ninh; token — Ninh ~340k (theo `docs/ai-usage-log.md`), Khoa chưa đo.
 - Một lần AI sai và cách nhóm phát hiện: script `log_ai_usage.py` xanh trên máy Ninh nhưng 3 test đỏ trên máy Khoa (repo ở ổ D:, thư mục tạm ở C:) — phát hiện nhờ chạy lại test sau khi pull, không tin bằng chứng của máy khác.
 - Nếu làm lại, đổi gì: PO chép yêu cầu mỗi phase vào repo ngay khi mở; gắn tag đúng mốc giờ; ưu tiên yêu cầu của đề trước rồi mới đánh bóng hình ảnh.
+- Ghi chú tag (trung thực): `phase-1`…`phase-3` giữ nguyên mốc cũ. Sau khi đọc PRD-0 trên lab board, nhóm sửa luật gather/quán theo đề (commit 27f8b4f, 59/59 test) **sau hạn**, rồi **dời `phase-4` và `v1.0.0`** sang commit phát hành mới để bản chấm là bản đúng đề. Phase 2–4 (chế độ `day`, Shop, cá bơi/sinh, Cá Sấu, 6 món) chưa làm.
