@@ -9,12 +9,15 @@ const TILT = 0.6;
 function quanView(w, h, s) {
   const meta = s.meta || {}, b = meta.bounds || { x: [0, 16], z: [0, 10] };
   const X = b.x[1] - b.x[0], Z = b.z[1] - b.z[0];
-  const top = 96, bottom = 70, side = Math.min(320, w * 0.24);
-  const u = Math.max(16, Math.min((w - side - 60) / (X + 4.5), (h - top - bottom) / (Z * TILT + 6)));
+  // màn dọc (điện thoại): kho + thực đơn xếp phía trên, ghe chiếm hết chiều ngang, chừa đáy cho joystick
+  const portrait = w < 700 && h > w, sc = hudScale(w), nMenu = Object.keys(s.menu || {}).length || 3;
+  const top = portrait ? 14 + 64 * sc + 26 + 150 * sc + 12 + (34 + nMenu * 62) * sc + 16 : 96;
+  const bottom = portrait ? 150 : 70, side = portrait ? 0 : w < 700 ? Math.max(130, w * 0.34) : Math.min(320, w * 0.24);
+  const u = Math.max(w < 700 ? 9 : 16, Math.min((w - side - 60) / (X + 4.5), (h - top - bottom) / (Z * TILT + 6)));
   const zu = u * TILT;
   const ox = (w - side - u * X) / 2 + 6;
   const oy = top + 3.6 * u + Math.max(0, (h - top - bottom - u * (Z * TILT + 6)) / 2);
-  const v = { u, zu, b, meta, X, Z, side, ox, oy, sx: (x) => ox + (x - b.x[0]) * u, sy: (z) => oy + (b.z[1] - z) * zu };
+  const v = { u, zu, b, meta, X, Z, side, ox, oy, portrait, sx: (x) => ox + (x - b.x[0]) * u, sy: (z) => oy + (b.z[1] - z) * zu };
   Quan.view = v;
   return v;
 }
@@ -138,8 +141,10 @@ function drawQuanScene(w, h, s) {
     }
     // vòng tương tác trên sàn (vẽ trước mọi vật)
     const r = meta.interact_radius || 1.5, px = sx(G.disp[0]), py = sy(G.disp[1]);
-    ctx.strokeStyle = "rgba(255,230,160,.35)"; ctx.setLineDash([5, 6]); ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.ellipse(px, py, r * u, r * zu, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+    if (typeof Settings === "undefined" || Settings.ring) {   // bật/tắt ở menu Cài đặt
+      ctx.strokeStyle = "rgba(255,230,160,.35)"; ctx.setLineDash([5, 6]); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(px, py, r * u, r * zu, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+    }
     items.push({ z: G.disp[1] - 0.01, draw: () => drawSenStand(px, py, u, { t, moving, dir: Quan.dir, face: Quan.face, hand: s.hand }) });
   }
   items.sort((a, b2) => b2.z - a.z);
@@ -340,7 +345,7 @@ function hintQuan(v, s, p) {
 
 // ---------------- HUD buổi tối ----------------
 function drawQuanHud(w, h, s) {
-  const sc = Math.min(1.15, Math.max(0.75, w / 1280)), v = Quan.view;
+  const sc = hudScale(w), v = Quan.view;
   // thanh trên
   const pw = Math.min(w - v.side - 40, 640 * sc), ph = 64 * sc, x0 = 14, y0 = 14;
   panel(x0, y0, pw, ph);
@@ -354,13 +359,13 @@ function drawQuanHud(w, h, s) {
   const day = (s.story && s.story.day) || 1;
   text(`Ngày ${day} · Phục vụ ${s.served_count ?? 0} · Bỏ đi ${s.left_count ?? 0}`, x0 + 16 * sc, y0 + ph + 18 * sc, { size: 13 * sc, color: "#c9d6ff", stroke: "rgba(0,0,0,.5)", strokeW: 3 });
 
-  // cột phải: kho + thực đơn
-  const cx = w - v.side - 14, cw = v.side, kh = 150 * sc;
-  panel(cx, 14, cw, kh);
-  text("KHO NGUYÊN LIỆU", cx + 14, 14 + 24 * sc, { size: 13 * sc, weight: 800, color: "#ffe39a" });
+  // cột phải: kho + thực đơn (màn dọc: xếp dưới thanh trên, rộng hết màn)
+  const cx = v.portrait ? 14 : w - v.side - 14, cw = v.portrait ? w - 28 : v.side, kh = 150 * sc, ky = v.portrait ? 14 + ph + 26 : 14;
+  panel(cx, ky, cw, kh);
+  text("KHO NGUYÊN LIỆU", cx + 14, ky + 24 * sc, { size: 13 * sc, weight: 800, color: "#ffe39a" });
   const kinds = ["ca_loc", "ca_linh", "bong_dien_dien", "bong_sung"], stock = s.stock || {}, res = s.reserved || {};
   kinds.forEach((k, i) => {
-    const col = i % 2, row = Math.floor(i / 2), ix = cx + 14 + col * (cw - 28) / 2, iy = 14 + 46 * sc + row * 48 * sc;
+    const col = i % 2, row = Math.floor(i / 2), ix = cx + 14 + col * (cw - 28) / 2, iy = ky + 46 * sc + row * 48 * sc;
     rrect(ix, iy, (cw - 36) / 2, 40 * sc, 8); ctx.fillStyle = "rgba(255,240,210,.1)"; ctx.fill();
     drawItem(k, ix + 22 * sc, iy + 20 * sc, 12 * sc, G.time);
     const have = stock[k] || 0, held = res[k] || 0;
@@ -368,7 +373,7 @@ function drawQuanHud(w, h, s) {
     if (held) text("giữ " + held, ix + 46 * sc, iy + 34 * sc, { size: 10.5 * sc, color: "#ffcc80", base: "middle" });
     text(KIND_NAME[k], ix + (cw - 36) / 2 - 6, iy + 12 * sc, { size: 9.5 * sc, align: "right", color: "#c9b08a" });
   });
-  const menu = s.menu || {}, ids = Object.keys(menu).sort(), my = 14 + kh + 12, mh = 34 * sc + ids.length * 62 * sc;
+  const menu = s.menu || {}, ids = Object.keys(menu).sort(), my = ky + kh + 12, mh = 34 * sc + ids.length * 62 * sc;
   panel(cx, my, cw, mh, { fill: "rgba(250,238,210,.95)", border: "rgba(120,70,30,.6)" });
   text("THỰC ĐƠN", cx + cw / 2, my + 24 * sc, { size: 15 * sc, align: "center", weight: 800, color: "#7a3a12" });
   const avail = {}; for (const k of kinds) avail[k] = (stock[k] || 0) - (res[k] || 0);
@@ -385,7 +390,7 @@ function drawQuanHud(w, h, s) {
     }
     ctx.globalAlpha = 1;
   });
-  text("WASD đi · E nấu / lấy món / mời khách · P tạm dừng · M âm thanh", w - 14, h - 14, { size: 12 * sc, align: "right", color: "rgba(255,255,255,.7)", stroke: "rgba(0,0,0,.35)", strokeW: 3 });
+  if (!UI.touch) text("WASD đi · E nấu / lấy món / mời khách · P tạm dừng · H hướng dẫn · M âm thanh", w - 14, h - 14, { size: 12 * sc, align: "right", color: "rgba(255,255,255,.7)", stroke: "rgba(0,0,0,.35)", strokeW: 3 });
   // món đang cầm
   if (s.hand) {
     const hw = 260 * sc, hh = 52 * sc, hx = 14, hy = h - hh - 14;

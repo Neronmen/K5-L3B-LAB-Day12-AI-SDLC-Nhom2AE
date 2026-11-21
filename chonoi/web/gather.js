@@ -211,7 +211,7 @@ function mixColor(a, b, t) {
 
 // ---------------- HUD buổi sáng ----------------
 function drawGatherHud(w, h, s) {
-  const p = s.player || {}, sc = Math.min(1.15, Math.max(0.75, w / 1280));
+  const p = s.player || {}, sc = hudScale(w);
   // khung trái trên: đồng hồ + oxy + Máu
   const x0 = 14, y0 = 14, pw = 300 * sc, ph = 96 * sc;
   panel(x0, y0, pw, ph);
@@ -255,7 +255,7 @@ function drawGatherHud(w, h, s) {
   if ((s.hold_count ?? 0) >= cap) text("ĐẦY", gx + gw / 2, gy + 20 * sc, { size: 13 * sc, align: "center", weight: 800, color: "#ff8a80" });
 
   // phím
-  text("WASD bơi · E hái / cập bến · SPACE bắt cá · P tạm dừng · M âm thanh", w - 14, h - 14, { size: 12 * sc, align: "right", color: "rgba(255,255,255,.7)", stroke: "rgba(0,0,0,.35)", strokeW: 3 });
+  if (!UI.touch) text("WASD bơi · E hái / cập bến · SPACE bắt cá · P tạm dừng · H hướng dẫn · M âm thanh", w - 14, h - 14, { size: 12 * sc, align: "right", color: "rgba(255,255,255,.7)", stroke: "rgba(0,0,0,.35)", strokeW: 3 });
 
   // cảnh báo ngạt: viền đỏ
   if (p.at_surface === false && frac < 0.2) {

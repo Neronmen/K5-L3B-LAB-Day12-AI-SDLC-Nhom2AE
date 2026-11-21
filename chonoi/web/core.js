@@ -70,8 +70,9 @@ let lastSent = "", queue = [], inflight = false;
 function currentInput() {
   if (transActive() || Tut.active) return { move: [0, 0], interact: false, catch: false };
   const mode = G.snap ? G.snap.mode : "gather";
-  const dx = (down.has("r") ? 1 : 0) - (down.has("l") ? 1 : 0);
+  let dx = (down.has("r") ? 1 : 0) - (down.has("l") ? 1 : 0);
   let dy = (down.has("d") ? 1 : 0) - (down.has("u") ? 1 : 0);
+  if (UI.joy && UI.joy.v) { dx = UI.joy.v[0]; dy = UI.joy.v[1]; }   // joystick ảo (đã chuẩn hóa trong [-1, 1])
   if (mode === "quan") dy = -dy;  // quan: lên màn hình = z dương
   return { move: [dx, dy], interact: down.has("interact"), catch: down.has("catch") };
 }
@@ -205,5 +206,5 @@ function drawParticles(sx, sy, s) {
   }
   ctx.globalAlpha = 1;
 }
-function addShake(v) { G.shake = Math.max(G.shake, v); }
+function addShake(v) { if (typeof Settings !== "undefined" && !Settings.shake) return; G.shake = Math.max(G.shake, v); }
 function addFlash(v, color) { G.flash = Math.max(G.flash, v); if (color) G.flashColor = color; }

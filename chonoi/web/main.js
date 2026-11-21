@@ -23,7 +23,7 @@ function frame(now) {
     text(G.offline ? "Không kết nối được máy chủ — đã chạy python -m chonoi.live chưa?" : "Đang chèo ra chợ…", w / 2, h / 2, { align: "center", size: 20 });
     ctx.restore(); return;
   }
-  if (G.scene === "title") { drawTitle(w, h, s); ctx.restore(); drawTransition(w, h); return; }
+  if (G.scene === "title") { drawTitle(w, h, s); ctx.restore(); if (UI.page === "settings") drawSettings(w, h); drawTransition(w, h); return; }
   if (s.mode === "quan") drawQuanScene(w, h, s); else drawGatherScene(w, h, s);
   ctx.restore();
   if (s.mode === "quan") drawQuanHud(w, h, s); else drawGatherHud(w, h, s);
@@ -31,8 +31,10 @@ function frame(now) {
   if (Tut.active && G.banner) G.banner.t = G.time;   // banner chờ đọc xong hướng dẫn
   drawBanner(w, h);
   if (G.scene === "summary") drawSummary(w, h, s);
-  else if (G.paused) drawPause(w, h);
+  else if (G.paused) drawPauseMenu(w, h);
   else drawTutorial(w, h);
+  drawTouchControls(w, h, s);
+  drawToasts(w, h);
   drawTransition(w, h);
   if (G.offline) text("Mất kết nối tới máy chủ", w / 2, h - 40, { align: "center", color: "#ff8a80", size: 16, stroke: "#000" });
   if (s.error) text("Luật báo lỗi — xem terminal. R để chơi lại.", w / 2, 120, { align: "center", color: "#ff8a80", size: 16, stroke: "#000" });
@@ -67,8 +69,8 @@ function drawTitle(w, h, s) {
   const my = h * 0.58, ma = clamp((G.time - UI.titleAt - 0.6) / 0.4, 0, 1);
   ctx.globalAlpha = ma;
   TITLE_ITEMS.forEach((it, i) => {
-    const y = my + i * 54 * sc + (1 - ma) * 20, sel = UI.sel === i, pulse = sel ? 1 + Math.sin(G.time * 4) * 0.02 : 1;
-    const iw = Math.min(w - 32, 420 * sc) * pulse, ih = 44 * sc;
+    const y = my + i * 50 * sc + (1 - ma) * 20, sel = UI.sel === i, pulse = sel ? 1 + Math.sin(G.time * 4) * 0.02 : 1;
+    const iw = Math.min(w - 32, 420 * sc) * pulse, ih = 42 * sc;
     const label = typeof it.label === "function" ? it.label() : it.label;
     if (uiButton("title" + i, w / 2 - iw / 2, y - ih / 2, iw, ih, label, { key: it.key, sc, size: 18 * sc, selected: sel, act: it.act })) UI.sel = i;
     if (sel) text("▶", w / 2 - iw / 2 - 14 * sc, y + 6 * sc, { size: 18 * sc, align: "center", color: "#ffe39a", stroke: "rgba(0,0,0,.5)" });
@@ -100,11 +102,6 @@ function drawBanner(w, h) {
   ctx.globalAlpha = 1;
 }
 
-function drawPause(w, h) {
-  ctx.fillStyle = "rgba(5,10,20,.6)"; ctx.fillRect(0, 0, w, h);
-  text("TẠM DỪNG", w / 2, h / 2 - 10, { size: 48, align: "center", weight: 800, color: "#ffe39a", stroke: "#000", strokeW: 6 });
-  text("P / Esc: chơi tiếp · R: chơi lại buổi này · T: về màn chính", w / 2, h / 2 + 30, { size: 17, align: "center" });
-}
 
 function drawSummary(w, h, s) {
   const t = Math.min(1, (G.time - G.summaryAt) / 0.5), ease = 1 - Math.pow(1 - t, 3);

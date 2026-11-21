@@ -1,7 +1,9 @@
 "use strict";
 /* Âm thanh tổng hợp bằng WebAudio (không dùng tệp ngoài -> không lo bản quyền). M = bật/tắt. */
 const Audio2 = (() => {
-  let ac = null, master = null, musicGain = null, muted = false, mood = null, timer = null, step = 0;
+  // master -> musicBus (âm lượng Nhạc) + sfxBus (âm lượng Hiệu ứng); hai thanh trượt ở menu Cài đặt
+  let ac = null, master = null, musicGain = null, sfxBus = null, muted = false, mood = null, timer = null, step = 0;
+  let musicVol = 0.7, sfxVol = 0.8;
   try { muted = localStorage.getItem("chonoi_muted") === "1"; } catch (e) { }
 
   function unlock() {
@@ -9,7 +11,8 @@ const Audio2 = (() => {
     try {
       ac = new (window.AudioContext || window.webkitAudioContext)();
       master = ac.createGain(); master.gain.value = muted ? 0 : 0.55; master.connect(ac.destination);
-      musicGain = ac.createGain(); musicGain.gain.value = 0.16; musicGain.connect(master);
+      musicGain = ac.createGain(); musicGain.gain.value = 0.23 * musicVol; musicGain.connect(master);
+      sfxBus = ac.createGain(); sfxBus.gain.value = sfxVol; sfxBus.connect(master);
       if (mood) startMusic();
     } catch (e) { ac = null; }
   }
@@ -17,6 +20,12 @@ const Audio2 = (() => {
     muted = !muted;
     try { localStorage.setItem("chonoi_muted", muted ? "1" : "0"); } catch (e) { }
     if (master) master.gain.setTargetAtTime(muted ? 0 : 0.55, ac.currentTime, 0.05);
+  }
+  function setVolumes(m, s) {
+    musicVol = clamp(m, 0, 1); sfxVol = clamp(s, 0, 1);
+    if (!ac) return;
+    musicGain.gain.setTargetAtTime(0.23 * musicVol, ac.currentTime, 0.05);
+    sfxBus.gain.setTargetAtTime(sfxVol, ac.currentTime, 0.05);
   }
   function tone(freq, dur, o = {}) {
     if (!ac) return;
@@ -28,7 +37,7 @@ const Audio2 = (() => {
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(o.vol || 0.3, t0 + (o.attack || 0.01));
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    osc.connect(g); g.connect(o.out || master);
+    osc.connect(g); g.connect(o.out || sfxBus);
     osc.start(t0); osc.stop(t0 + dur + 0.05);
   }
   function noise(dur, o = {}) {
@@ -40,7 +49,7 @@ const Audio2 = (() => {
     const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
     src.buffer = buf; f.type = o.filter || "lowpass"; f.frequency.value = o.freq || 1200;
     g.gain.value = o.vol || 0.25;
-    src.connect(f); f.connect(g); g.connect(master); src.start(t0);
+    src.connect(f); f.connect(g); g.connect(o.out || sfxBus); src.start(t0);
   }
   const SFX = {
     click: () => tone(660, 0.08, { type: "triangle", vol: 0.2 }),
@@ -96,5 +105,5 @@ const Audio2 = (() => {
     if (timer) { clearInterval(timer); timer = null; }
     startMusic();
   }
-  return { unlock, toggle, sfx, music, get muted() { return muted; } };
+  return { unlock, toggle, sfx, music, setVolumes, get muted() { return muted; } };
 })();
