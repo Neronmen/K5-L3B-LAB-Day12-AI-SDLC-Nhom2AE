@@ -61,7 +61,11 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)  # thiếu tham số -> argparse thoát mã 2
     row = make_row(a)
     append_row(a.file, row)
-    print("Đã ghi vào " + os.path.relpath(a.file, os.getcwd()) + ":\n" + row)
+    try:
+        shown = os.path.relpath(a.file, os.getcwd())
+    except ValueError:  # Windows: file và thư mục hiện tại khác ổ đĩa (vd. file tạm ở C:, repo ở D:)
+        shown = os.path.abspath(a.file)
+    print("Đã ghi vào " + shown + ":\n" + row)
     return 0
 
 
