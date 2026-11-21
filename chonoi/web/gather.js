@@ -225,7 +225,7 @@ function drawGatherHud(w, h, s) {
   for (let i = 0; i < (p.hp_max || 3); i++) heart(x0 + pw - 30 * sc - i * 30 * sc, y0 + 22 * sc, 11 * sc, i < (p.hp_max || 3) - (p.hp ?? 3) ? 0 : 1);
   // oxy
   const frac = p.oxygen_max_ticks ? p.oxygen_ticks / p.oxygen_max_ticks : 1, low = frac < 0.25;
-  const bx = x0 + 44 * sc, by = y0 + 50 * sc, bw = pw - 60 * sc, bh = 20 * sc;
+  const bx = x0 + 44 * sc + oxyStress(p), by = y0 + 50 * sc, bw = pw - 60 * sc, bh = 20 * sc;   // oxy < 25%: rung + tim đập (hud.js)
   drawItemBubble(x0 + 26 * sc, by + bh / 2, 11 * sc);
   rrect(bx, by, bw, bh, bh / 2); ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.fill();
   const pulse = low ? 0.6 + Math.sin(G.time * 12) * 0.4 : 1;
@@ -255,13 +255,16 @@ function drawGatherHud(w, h, s) {
     rrect(x, y, slot, slot, 8 * sc); ctx.fillStyle = "rgba(255,240,210,.12)"; ctx.fill();
     ctx.strokeStyle = "rgba(255,220,160,.25)"; ctx.lineWidth = 1; ctx.stroke();
     const k = (s.hold || [])[i];
-    if (k) drawItem(k, x + slot / 2, y + slot / 2, slot * 0.32, G.time);
+    // ô vừa nhặt: chờ icon bay tới rồi nảy lên (hud.js)
+    if (k && !Hud.fly.some((f) => f.slot === i)) drawItem(k, x + slot / 2, y + slot / 2, slot * 0.32 * slotBounce(i), G.time);
   }
   if ((s.hold_count ?? 0) >= cap) text("ĐẦY", gx + gw / 2, gy + 20 * sc, { size: 13 * sc, align: "center", weight: 800, color: "#ff8a80" });
 
   // phím
   if (!UI.touch) text("WASD bơi · E hái / cập bến · SPACE bắt cá · P tạm dừng · H hướng dẫn · M âm thanh", w - 14, h - 14, { size: 12 * sc, align: "right", color: "rgba(255,255,255,.7)", stroke: "rgba(0,0,0,.35)", strokeW: 3 });
 
+  drawMinimap(w, h, s);
+  drawDepthRuler(w, h, s);
   // cảnh báo ngạt: viền đỏ
   if (p.at_surface === false && frac < 0.2) {
     const a = (0.2 - frac) / 0.2 * (0.35 + Math.sin(G.time * 10) * 0.15);

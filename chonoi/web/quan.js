@@ -355,9 +355,11 @@ function drawQuanHud(w, h, s) {
   panel(x0, y0, pw, ph);
   text("☾ " + fmtTime(s.time_left_ticks), x0 + 16 * sc, y0 + 40 * sc, { size: 24 * sc, weight: 800, color: "#ffe39a" });
   coin(x0 + 140 * sc, y0 + 32 * sc, 12 * sc);
-  text((s.money ?? 0) + "k", x0 + 160 * sc, y0 + 41 * sc, { size: 24 * sc, weight: 800, color: "#ffd34d" });
+  const shown = hudMoney(s), rising = shown < (s.money ?? 0);   // tiền chạy lên (hud.js)
+  text(shown + "k", x0 + 160 * sc, y0 + 41 * sc, { size: 24 * sc * (rising ? 1.12 : 1), weight: 800, color: rising ? "#fff2a0" : "#ffd34d" });
   const rep = s.reputation ?? 0, rmax = (s.meta && s.meta.reputation_max) || 5;
   for (let i = 0; i < rmax; i++) starIcon(x0 + 280 * sc + i * 28 * sc, y0 + 32 * sc, 11 * sc, clamp(rep - i, 0, 1));
+  drawStarFx(x0 + 280 * sc, y0 + 32 * sc, 28 * sc, 11 * sc);   // sao lấp lánh khi tăng, rạn khi giảm
   text(rep.toFixed(1), x0 + 280 * sc + rmax * 28 * sc, y0 + 38 * sc, { size: 15 * sc, weight: 800, color: "#ffe39a" });
   text("Điểm " + (s.score ?? 0), x0 + pw - 16 * sc, y0 + 40 * sc, { size: 18 * sc, align: "right", weight: 800, color: "#fff" });
   const day = (s.story && s.story.day) || 1;
@@ -383,6 +385,12 @@ function drawQuanHud(w, h, s) {
   const avail = {}; for (const k of kinds) avail[k] = (stock[k] || 0) - (res[k] || 0);
   ids.forEach((id, i) => {
     const d = menu[id], y = my + 36 * sc + i * 62 * sc, can = Object.entries(d.recipe).every(([k, n]) => avail[k] >= n);
+    // thẻ món: sáng + viền vàng khi đủ nguyên liệu, tối + ổ khóa khi thiếu
+    rrect(cx + 6, y + 2 * sc, cw - 12, 56 * sc, 10);
+    if (can) {
+      ctx.fillStyle = `rgba(255,214,90,${0.22 + Math.sin(G.time * 3 + i) * 0.08})`; ctx.fill();
+      ctx.strokeStyle = "rgba(212,150,40,.85)"; ctx.lineWidth = 1.5; ctx.stroke();
+    } else { ctx.fillStyle = "rgba(60,30,10,.18)"; ctx.fill(); }
     ctx.globalAlpha = can ? 1 : 0.45;
     drawDish(id, cx + 30 * sc, y + 24 * sc, 16 * sc, G.time);
     text(DISH_NAME[id] || id, cx + 56 * sc, y + 16 * sc, { size: 12.5 * sc, weight: 800, color: "#4a2410" });
@@ -393,6 +401,7 @@ function drawQuanHud(w, h, s) {
       text("×" + n, rx + 10 * sc, y + 40 * sc, { size: 11 * sc, color: "#6a4020", weight: 700 }); rx += 44 * sc;
     }
     ctx.globalAlpha = 1;
+    if (!can) lockIcon(cx + 30 * sc, y + 24 * sc, 9 * sc);
   });
   if (!UI.touch) text("WASD đi · E nấu / lấy món / mời khách · P tạm dừng · H hướng dẫn · M âm thanh", w - 14, h - 14, { size: 12 * sc, align: "right", color: "rgba(255,255,255,.7)", stroke: "rgba(0,0,0,.35)", strokeW: 3 });
   // món đang cầm
@@ -402,6 +411,12 @@ function drawQuanHud(w, h, s) {
     drawDish(s.hand, hx + 30 * sc, hy + hh / 2, 16 * sc, G.time);
     text("Đang bưng: " + (DISH_NAME[s.hand] || s.hand), hx + 56 * sc, hy + hh / 2 + 5, { size: 14 * sc, weight: 800, color: "#ffe39a" });
   }
+}
+function lockIcon(x, y, r) {
+  ctx.strokeStyle = "#4a2410"; ctx.lineWidth = Math.max(1.5, r * 0.28);
+  ctx.beginPath(); ctx.arc(x, y - r * 0.2, r * 0.55, Math.PI, 0); ctx.stroke();
+  ctx.fillStyle = "#6a4020"; rrect(x - r * 0.8, y - r * 0.2, r * 1.6, r * 1.2, r * 0.25); ctx.fill();
+  ctx.fillStyle = "#ffe39a"; ctx.beginPath(); ctx.arc(x, y + r * 0.35, r * 0.2, 0, 7); ctx.fill();
 }
 function coin(x, y, r) {
   ctx.fillStyle = "#c9931e"; ctx.beginPath(); ctx.arc(x, y + 1.5, r, 0, 7); ctx.fill();

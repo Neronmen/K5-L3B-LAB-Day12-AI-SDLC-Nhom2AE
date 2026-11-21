@@ -4,6 +4,7 @@
 function handleEvent(e, s) {
   if (G.scene === "title") return;
   achEvent(e, s);   // thành tích (ui.js)
+  if (s.mode === "quan") hudQuanEvent(e, s); else hudGatherEvent(e, s);   // icon/xu bay vào HUD (hud.js)
   if (s.mode === "quan") quanEvent(e, s); else gatherEvent(e, s);
 }
 
@@ -29,6 +30,7 @@ function frame(now) {
   if (s.mode === "quan") drawQuanScene(w, h, s); else drawGatherScene(w, h, s);
   ctx.restore();
   if (s.mode === "quan") drawQuanHud(w, h, s); else drawGatherHud(w, h, s);
+  drawHudFly(w, h, s);
   if (G.flash > 0) { ctx.fillStyle = `rgba(${G.flashColor},${G.flash * 0.5})`; ctx.fillRect(0, 0, w, h); G.flash = Math.max(0, G.flash - dt * 2); }
   if (Tut.active && G.banner) G.banner.t = G.time;   // banner chờ đọc xong hướng dẫn
   drawBanner(w, h);

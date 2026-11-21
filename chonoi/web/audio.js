@@ -70,6 +70,7 @@ const Audio2 = (() => {
     angry: () => tone(300, 0.4, { type: "sawtooth", vol: 0.14, to: 180 }),
     fanfare: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.35, { type: "triangle", vol: 0.2, delay: i * 0.12 })),
     faint: () => [440, 392, 330, 262].forEach((f, i) => tone(f, 0.4, { type: "triangle", vol: 0.2, delay: i * 0.18 })),
+    heart: () => { tone(70, 0.12, { type: "sine", vol: 0.5, to: 50 }); tone(62, 0.14, { type: "sine", vol: 0.38, to: 45, delay: 0.16 }); },
     // gà gáy "ò ó o o": 4 nốt trượt tần số, sóng răng cưa nhỏ
     rooster: () => {
       tone(520, 0.14, { type: "sawtooth", to: 760, vol: 0.09 });
