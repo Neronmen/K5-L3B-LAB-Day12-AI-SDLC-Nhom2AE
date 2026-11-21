@@ -30,4 +30,4 @@
 
 ## Skills / hooks của nhóm
 - `run-tests` (`.agents/skills/run-tests/SKILL.md`): chạy toàn bộ test + ghi bằng chứng; dùng trước push và trước khi gắn tag.
-- (B viết skill thứ 2 — xem `docs/plan/teammate-20.md`.)
+- `log-ai-usage` (`.agents/skills/log-ai-usage/SKILL.md`): sau mỗi lát việc có dùng AI, ghi 1 dòng vào `docs/ai-usage-log.md` bằng `python tools/log_ai_usage.py --phase N --who <handle> --tool "..." --task "..." --cost "..." --note "AI sai ở ..."` (escape `|`, thiếu tham số -> mã 2). Test: `tests/test_log_ai_usage.py`.
