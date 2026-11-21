@@ -148,8 +148,11 @@ function drawQuanScene(w, h, s) {
       ctx.strokeStyle = "rgba(255,230,160,.35)"; ctx.setLineDash([5, 6]); ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.ellipse(px, py, r * u, r * zu, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]);
     }
-    items.push({ z: G.disp[1] - 0.01, draw: () => drawSenStand(px, py, u, { t, moving, dir: Quan.dir, face: Quan.face, hand: s.hand }) });
+    senDust(p, moving);   // bụi chân (anim.js)
+    const emo = senEmote(moving);
+    items.push({ z: G.disp[1] - 0.01, draw: () => drawSenStand(px, py, u, { t, moving, dir: Quan.dir, face: Quan.face, hand: s.hand, emo }) });
   }
+  pushGhostItems(v, items, t);   // khách rời đi: vẫy tay / dậm chân (anim.js)
   items.sort((a, b2) => b2.z - a.z);
   for (const it of items) it.draw();
 
@@ -256,7 +259,8 @@ function drawTable3D(v, tb, c, s, t) {
   // ghế đẩu trái (khách ngồi) và phải
   const stool = (sxp) => { shadow(sxp, y + 0.05 * zu, 0.4 * u, 0.3 * zu, 0.25); cylinder(sxp, y, 0.32 * u, 0.2 * zu * 1.3, 0.45 * u, "#5e3a1f", "#8a5a30"); };
   stool(x - 1.6 * u);
-  if (c) drawCustomerSit(x - 1.6 * u, y - 0.45 * u, u, c, t);
+  const walk = c ? customerWalkIn(v, tb, c) : null;   // khách vừa tới: đi từ mép ghe vào ghế (chỉ hình)
+  if (c && !walk) drawCustomerSit(x - 1.6 * u, y - 0.45 * u, u, c, t);
   // chân bàn + mặt bàn
   ctx.fillStyle = "#5a361b"; ctx.fillRect(x - 0.1 * u, y - topH, 0.2 * u, topH);
   ctx.fillStyle = "#4a2c15"; ctx.beginPath(); ctx.ellipse(x, y, 0.45 * u, 0.2 * zu, 0, 0, 7); ctx.fill();
@@ -264,6 +268,7 @@ function drawTable3D(v, tb, c, s, t) {
   ctx.fillStyle = "#c48d52"; ctx.beginPath(); ctx.ellipse(x, y - topH, rx, ry, 0, 0, 7); ctx.fill();
   ctx.strokeStyle = "rgba(120,70,30,.5)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(x, y - topH, rx * 0.8, ry * 0.8, 0, 0, 7); ctx.stroke();
   stool(x + 1.6 * u);
+  if (walk) drawCustomerStand(walk.x, y + 0.05 * zu, u, c, t, { walk: true });
   text("BÀN " + tb.id, x, y + 0.9 * zu + 0.35 * u, { size: Math.max(10, u * 0.36), align: "center", weight: 800, color: "rgba(255,230,190,.75)", stroke: "rgba(0,0,0,.5)", strokeW: 3 });
   // đồ trên bàn
   if (!c) {

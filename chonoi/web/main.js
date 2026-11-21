@@ -4,6 +4,7 @@
 function handleEvent(e, s) {
   if (G.scene === "title") return;
   achEvent(e, s);   // thành tích (ui.js)
+  animEvent(e, s);  // hoạt ảnh nhân vật/khách (anim.js)
   if (s.mode === "quan") hudQuanEvent(e, s); else hudGatherEvent(e, s);   // icon/xu bay vào HUD (hud.js)
   if (s.mode === "quan") quanEvent(e, s); else gatherEvent(e, s);
 }

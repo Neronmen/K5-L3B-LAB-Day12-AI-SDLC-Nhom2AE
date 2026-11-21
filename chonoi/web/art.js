@@ -75,6 +75,7 @@ function drawSenSide(x, y, u, o) {
     // nổi ở mặt nước: đầu + vai, nón lá trên đầu, nhấp nhô
     const bob = Math.sin(t * 3) * 0.06 * u;
     ctx.translate(0, bob);
+    if (o.shake) { ctx.translate(0, -0.3 * u); ctx.rotate(o.shake * 0.28); ctx.translate(0, 0.3 * u); }   // lắc đầu "giỏ đầy!" 
     ctx.fillStyle = PAL.ao; rrectU(-0.38 * u, -0.25 * u, 0.76 * u, 0.5 * u, 0.2 * u); ctx.fill();
     ctx.fillStyle = PAL.skin; ctx.beginPath(); ctx.arc(0.02 * u, -0.48 * u, 0.26 * u, 0, 7); ctx.fill();
     ctx.fillStyle = PAL.hair; ctx.beginPath(); ctx.arc(-0.04 * u, -0.55 * u, 0.26 * u, Math.PI * 0.9, Math.PI * 2.0); ctx.fill();
@@ -96,11 +97,11 @@ function drawSenSide(x, y, u, o) {
 function rrectU(x, y, w, h, r) { rrect(x, y, w, h, Math.min(r, w / 2, h / 2)); }
 
 // ----- cá -----
-function drawFishBody(x, y, u, kind, t, face = 1, scale = 1) {
+function drawFishBody(x, y, u, kind, t, face = 1, scale = 1, rot = 0, wagMul = 1) {
   const big = kind === "ca_loc";
   const L = (big ? 1.4 : 0.55) * u * scale, H = (big ? 0.42 : 0.22) * u * scale;
-  const wag = Math.sin(t * (big ? 6 : 14)) * 0.35;
-  ctx.save(); ctx.translate(x, y); ctx.scale(face, 1);
+  const wag = Math.sin(t * (big ? 6 : 14) * wagMul) * 0.35 * Math.min(2, wagMul);
+  ctx.save(); ctx.translate(x, y); ctx.scale(face, 1); if (rot) ctx.rotate(rot);
   const g = ctx.createLinearGradient(0, -H, 0, H);
   if (big) { g.addColorStop(0, "#3c4a2c"); g.addColorStop(0.55, "#6f7f48"); g.addColorStop(1, "#c8c79a"); }
   else { g.addColorStop(0, "#8fa8bb"); g.addColorStop(0.5, "#e6f1f8"); g.addColorStop(1, "#ffffff"); }
@@ -122,14 +123,18 @@ function drawFishBody(x, y, u, kind, t, face = 1, scale = 1) {
   ctx.restore();
 }
 /* Đàn cá: cá linh bơi thành bầy nhỏ xoay quanh tâm; cá lóc một con lớn lượn. Chỉ là hình, vị trí luật là tâm. */
-function drawSchool(x, y, u, kind, t, seed) {
+function drawSchool(x, y, u, kind, t, seed, scare = 0) {
   if (kind === "ca_loc") {
     const dx = Math.sin(t * 0.6 + seed * 9) * 0.8 * u, face = Math.cos(t * 0.6 + seed * 9) >= 0 ? 1 : -1;
-    drawFishBody(x + dx, y + Math.sin(t * 1.3 + seed) * 0.2 * u, u, kind, t + seed * 5, face);
+    // thỉnh thoảng quẫy mạnh (~0.5 s mỗi 6 s, lệch pha theo seed)
+    const ph = (t / 6 + seed) % 1, thrash = ph < 0.08 ? Math.sin(ph / 0.08 * Math.PI) : 0;
+    drawFishBody(x + dx + Math.sin(t * 40) * thrash * 0.15 * u, y + Math.sin(t * 1.3 + seed) * 0.2 * u, u, kind, t + seed * 5, face, 1, Math.sin(t * 30) * thrash * 0.35, 1 + thrash * 3);
+    if (thrash > 0.5 && Math.random() < 0.3) G.particles.push({ x: Gather.view ? (x - Gather.view.w / 2) / u + Gather.cam : 0, y: (y - (Gather.view ? Gather.view.surf : 0)) / u, vx: fxRand(-0.5, 0.5), vy: -fxRand(0.8, 1.6), g: 0, life: 0, max: fxRand(0.6, 1.1), size: fxRand(0.05, 0.12), kind: "bubble" });
     return;
   }
   for (let i = 0; i < 7; i++) {
-    const a = t * 0.9 + i * 0.9 + seed * 7, r = (0.5 + (i % 3) * 0.28) * u;
+    // Út Sen lại gần: bầy tản rộng ra và bơi nhanh hơn (chỉ hình)
+    const a = t * (0.9 + scare * 2.2) + i * 0.9 + seed * 7, r = (0.5 + (i % 3) * 0.28) * u * (1 + scare * 1.8);
     const fx = x + Math.cos(a) * r * 1.3, fy = y + Math.sin(a * 1.3) * r * 0.5;
     drawFishBody(fx, fy, u, kind, t + i, -Math.sin(a) >= 0 ? 1 : -1, 0.8 + (i % 2) * 0.25);
   }
@@ -318,10 +323,13 @@ function drawPonytail(x, y, u, sway, behindDir) {
 
 function drawSenStand(x, y, u, o = {}) {
   const t = o.t || 0, dir = o.dir || "down", face = o.face || 1, side = dir === "side";
+  const emo = o.emo || {}, cheer = emo.cheer || 0;
   const ph = o.moving ? t * 10 : 0, sw = o.moving ? Math.sin(ph) : 0;
-  const bob = o.moving ? Math.abs(Math.cos(ph)) * 0.025 * u : Math.sin(t * 2) * 0.01 * u;
-  ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.ellipse(x, y, 0.45 * u, 0.15 * u, 0, 0, 7); ctx.fill();
+  const jump = cheer ? Math.abs(Math.sin(cheer * Math.PI * 2)) * 0.45 * u : 0;   // nhảy 2 nhịp khi được trả tiền
+  const bob = (o.moving ? Math.abs(Math.cos(ph)) * 0.025 * u : Math.sin(t * 2) * 0.01 * u) + jump;
+  ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.ellipse(x, y, 0.45 * u * (1 - jump / u * 0.6), 0.15 * u, 0, 0, 7); ctx.fill();
   ctx.save(); ctx.translate(x, y - bob);
+  if (emo.breathe) ctx.scale(1 - emo.breathe * 0.5, 1 + emo.breathe);   // thở nhẹ khi đứng yên
   if (side) ctx.scale(face, 1);
   const hipY = -0.84 * u, shY = -1.36 * u, headY = -1.7 * u;
   const legA = side ? sw * 0.45 : 0;                    // nghiêng: chân đá trước/sau
@@ -382,7 +390,8 @@ function drawSenStand(x, y, u, o = {}) {
     const [hx, hy] = limbEnd(sx, shY + 0.05 * u, ang, 0.62 * u);
     ctx.fillStyle = STREET.skin; ctx.beginPath(); ctx.arc(hx, hy, 0.07 * u, 0, 7); ctx.fill();
   };
-  if (o.hand && dir !== "up") { arm(-0.36 * u, -0.55); arm(0.36 * u, 0.55); }      // hai tay đưa ra trước bưng món
+  if (cheer && !o.hand) { const wv = Math.sin(t * 16) * 0.25; arm(-0.38 * u, 2.7 + wv); arm(0.38 * u, -2.7 - wv); }   // giơ hai tay ăn mừng
+  else if (o.hand && dir !== "up") { arm(-0.36 * u, -0.55); arm(0.36 * u, 0.55); }      // hai tay đưa ra trước bưng món
   else if (side) arm(0.02 * u, armA);
   else { arm(-0.38 * u, armA * (o.hand ? 0 : 1)); arm(0.38 * u, -armA * (o.hand ? 0 : 1)); }
 
@@ -398,7 +407,13 @@ function drawSenStand(x, y, u, o = {}) {
     ctx.beginPath(); ctx.moveTo(-0.27 * u, headY - 0.05 * u); ctx.quadraticCurveTo(-0.3 * u, headY + 0.2 * u, -0.2 * u, headY + 0.25 * u); ctx.lineTo(-0.2 * u, headY - 0.05 * u); ctx.fill(); // tóc mai
     if (!side) { ctx.beginPath(); ctx.moveTo(0.27 * u, headY - 0.05 * u); ctx.quadraticCurveTo(0.3 * u, headY + 0.2 * u, 0.2 * u, headY + 0.25 * u); ctx.lineTo(0.2 * u, headY - 0.05 * u); ctx.fill(); }
     ctx.fillStyle = STREET.hairTip; ctx.beginPath(); ctx.ellipse(-0.1 * u, headY - 0.2 * u, 0.1 * u, 0.04 * u, -0.4, 0, 7); ctx.fill(); // highlight hồng ở mái
-    // kính râm
+    // kính râm (đứng yên lâu: đẩy lên đầu, lộ mắt biết chớp)
+    if (emo.glassesUp) {
+      ctx.fillStyle = "#1b1b1b";
+      const eye = (ex) => { if (emo.blink) ctx.fillRect(ex - 0.045 * u, headY + 0.01 * u, 0.09 * u, 0.02 * u); else { ctx.beginPath(); ctx.arc(ex, headY + 0.02 * u, 0.035 * u, 0, 7); ctx.fill(); } };
+      if (side) eye(0.16 * u); else { eye(-0.1 * u); eye(0.1 * u); }
+      ctx.translate(0, -0.2 * u);
+    }
     ctx.fillStyle = "#111";
     if (side) { rrectU(0.06 * u, headY - 0.04 * u, 0.2 * u, 0.12 * u, 0.04 * u); ctx.fill(); ctx.fillRect(-0.1 * u, headY - 0.03 * u, 0.18 * u, 0.025 * u); }
     else {
@@ -409,6 +424,7 @@ function drawSenStand(x, y, u, o = {}) {
     ctx.fillStyle = "rgba(255,95,184,.75)";
     if (side) ctx.fillRect(0.1 * u, headY - 0.02 * u, 0.06 * u, 0.03 * u);
     else { ctx.fillRect(-0.19 * u, headY - 0.02 * u, 0.06 * u, 0.03 * u); ctx.fillRect(0.07 * u, headY - 0.02 * u, 0.06 * u, 0.03 * u); }
+    if (emo.glassesUp) ctx.translate(0, 0.2 * u);
     // môi hồng + khuyên tai
     ctx.fillStyle = "#e0507a"; ctx.beginPath(); ctx.ellipse(side ? 0.15 * u : 0, headY + 0.15 * u, 0.05 * u, 0.025 * u, 0, 0, 7); ctx.fill();
     ctx.strokeStyle = STREET.gold; ctx.lineWidth = Math.max(1, 0.025 * u);
@@ -424,6 +440,7 @@ function drawSenStand(x, y, u, o = {}) {
 
 /* Khách ngồi trên ghế đẩu ((x, y) = mặt ghế), quay về phía bàn bên phải. */
 function drawCustomerSit(x, y, u, c, t) {
+  if (typeof drawCustomerSitStyled === "function") return drawCustomerSitStyled(x, y, u, c, t);   // 6 kiểu khách (anim.js)
   const h = hash(c.id), shirts = ["#3d7cc9", "#5aa36a", "#d08a2e", "#8e5bb5", "#c9475a", "#2f9e9b"];
   const shirt = shirts[Math.floor(h * shirts.length)], skin = h > 0.7 ? "#d9a27a" : PAL.skin;
   const eating = c.state === "eating", chew = eating ? Math.sin(t * 9) : 0;
