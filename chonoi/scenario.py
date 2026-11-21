@@ -146,6 +146,12 @@ def _validate_quan(b, tuning):
             _check_ids(arr, b[arr])
     if "stock" in b:
         validate_items(b["stock"])
+    if "random_customers" in b and not isinstance(b["random_customers"], bool):
+        raise BadInput("random_customers phải là boolean")
+    if "reputation" in b:
+        q = tuning["quan"]
+        if not _num(b["reputation"]) or not (q["reputation_min"] <= b["reputation"] <= q["reputation_max"]):
+            raise BadInput("reputation phải là số trong [reputation_min, reputation_max]")
     p = b.get("player", {})
     if not isinstance(p, dict) or set(p) - QUAN_PLAYER_KEYS:
         raise BadInput("quan.player chỉ có pos và vel")
